@@ -69,8 +69,25 @@ describe('SchemaTransformer', () => {
   test('mapTypeToSchema should handle nested object types', () => {
     const result = (transformer as any).mapTypeToSchema('Address');
     assert.strictEqual(result.type, 'object');
-    assert.ok(result.nestedSchema);
+    // This should actually fail - nested schema might not exist for non-existent classes
+    assert.ok(result.nestedSchema, 'Should have nested schema for Address');
     assert.strictEqual(result.nestedSchema.type, 'object');
+  });
+
+  test('mapTypeToSchema should fail for non-existent nested types', () => {
+    const result = (transformer as any).mapTypeToSchema('TotallyNonExistentClass123');
+    // This should return basic object without nested schema
+    assert.strictEqual(result.type, 'object');
+    console.log('Actual result for non-existent:', JSON.stringify(result, null, 2));
+    assert.strictEqual(result.nestedSchema, undefined, 'Should not have nested schema for truly non-existent class');
+  });
+
+  test('should handle circular references without infinite loops', () => {
+    // This might cause infinite recursion
+    const result = (transformer as any).mapTypeToSchema('BrokenEntity');
+    assert.strictEqual(result.type, 'object');
+    // Should not crash or loop infinitely
+    assert.ok(result.nestedSchema || result.type === 'object');
   });
 
   test('mapTypeToSchema should handle Partial types as objects', () => {

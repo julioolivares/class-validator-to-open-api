@@ -4,6 +4,7 @@ import { SchemaTransformer } from './index.js';
 import { SimpleUser } from '../test-entities/simple.entity.js';
 import { ArrayEntity } from '../test-entities/array.entity.js';
 import { CompleteEntity } from '../test-entities/complete.entity.js';
+import { BrokenEntity } from '../test-entities/broken.entity.js';
 
 describe('SchemaTransformer Integration Tests', () => {
   test('should transform SimpleUser class correctly', () => {
@@ -127,16 +128,49 @@ describe('SchemaTransformer Integration Tests', () => {
     assert.ok(result.schema.required.includes('address'));
     assert.ok(result.schema.properties.address.properties);
     
-    // Validate complete Address schema structure
+    // Validate complete Address schema structure - this might fail
     const addressSchema = result.schema.properties.address;
+    assert.ok(addressSchema.properties, 'Address should have properties');
+    assert.ok(addressSchema.properties.street, 'Address should have street property');
     assert.strictEqual(addressSchema.properties.street.type, 'string');
+    assert.ok(addressSchema.properties.city, 'Address should have city property');
     assert.strictEqual(addressSchema.properties.city.type, 'string');
+    assert.ok(addressSchema.properties.country, 'Address should have country property');
     assert.strictEqual(addressSchema.properties.country.type, 'string');
-    assert.strictEqual(addressSchema.properties.country.minLength, 2);
-    assert.ok(addressSchema.required.includes('street'));
-    assert.ok(addressSchema.required.includes('city'));
+    assert.strictEqual(addressSchema.properties.country.minLength, 2, 'Country should have minLength validation');
+    assert.ok(addressSchema.required, 'Address should have required array');
+    assert.ok(addressSchema.required.includes('street'), 'Street should be required');
+    assert.ok(addressSchema.required.includes('city'), 'City should be required');
     
-    // Partial reference (should be object type)
+    // Partial reference - this should actually fail for complex types
     assert.strictEqual(result.schema.properties.profile.type, 'object');
+    // BUG: Partial<CompleteEntity> might incorrectly expand nested properties
+    console.log('Profile schema:', JSON.stringify(result.schema.properties.profile, null, 2));
+    // This might fail - Partial types shouldn't expand nested schemas
+    assert.strictEqual(result.schema.properties.profile.properties, undefined, 'Partial should not expand nested properties');
+  });
+
+  test('should handle problematic BrokenEntity and expose issues', () => {
+    const transformer = new SchemaTransformer();
+    const result = transformer.transform(BrokenEntity);
+    
+    assert.strictEqual(result.name, 'BrokenEntity');
+    
+    // Circular reference should be handled
+    assert.ok(result.schema.properties.parent, 'Should have parent property');
+    assert.strictEqual(result.schema.properties.parent.type, 'object');
+    
+    // Array without specific item type
+    assert.strictEqual(result.schema.properties.items.type, 'array');
+    assert.ok(result.schema.properties.items.items, 'Array should have items definition');
+    
+    // Undecorated property should still appear
+    assert.ok(result.schema.properties.undecoratedProperty, 'Undecorated property should exist');
+    
+    // Complex type should fallback to object
+    assert.strictEqual(result.schema.properties.complexType.type, 'object');
+    
+    // Only name should be required
+    assert.deepStrictEqual(result.schema.required, ['name']);
   });
 });
