@@ -20,7 +20,27 @@
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
-  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/julioolivares/class-validator-to-open-api.git"
+  },
+  "keywords": [
+    "class-validator",
+    "openapi",
+    "swagger",
+    "typescript",
+    "validation",
+    "schema",
+    "api",
+    "dto",
+    "nestjs",
+    "express",
+    "decorators",
+    "transform",
+    "json-schema",
+    "rest-api",
+    "documentation"
+  ],
   "author": "",
   "license": "MIT",
   "engines": {
