@@ -48,11 +48,11 @@ export class SchemaTransformer {
       }
 
       if (!config.compilerOptions.emitDecoratorMetadata) {
-        throw new Error(messages.errors.emitDecoratorNoSet);
+        throw new Error(messages.errors.emitDecoratorNotSet);
       }
 
       if (!config.compilerOptions.experimentalDecorators) {
-        throw new Error(messages.errors.experimentalDecoratorsNoSet);
+        throw new Error(messages.errors.experimentalDecoratorsNotSet);
       }
 
       return true;

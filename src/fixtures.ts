@@ -4,8 +4,8 @@ import path, { format } from "path";
 const messages = {
   errors: {
     tsconfigNotFound: (path: string) => `tsconfig.json not found at ${path}`,
-    emitDecoratorNoSet: `emitDecoratorMetadata option is not configure as true on tsconfig.json`,
-    experimentalDecoratorsNoSet:
+    emitDecoratorNotSet: `emitDecoratorMetadata option is not configure as true on tsconfig.json`,
+    experimentalDecoratorsNotSet:
       "experimentalDecorators option is no set as true on tsconfig.json",
     compilerOptionsNotFound: 'compilerOptions not found on tsconfig.json'  
   },
