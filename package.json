@@ -5,10 +5,15 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test dist/src/**/*.test.js",
+    "test:watch": "node --test --watch dist/src/**/*.test.js",
+    "test:coverage": "node --test --experimental-test-coverage dist/src/**/*.test.js",
+    "pretest": "npm run build",
     "build:watch": "tsc -w",
     "build": "tsc",
-    "dev": "concurrently \"tsc -w\" \"nodemon\""
+    "dev": "concurrently \"tsc -w\" \"nodemon\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
@@ -21,13 +26,12 @@
   "devDependencies": {
     "@types/node": "24.2.1",
     "concurrently": "9.2.0",
-    "nodemon": "3.1.10"
+    "nodemon": "3.1.10",
+    "prettier": "3.6.2"
   },
   "dependencies": {
-    "class-transformer": "0.5.1",
-    "typescript": "5.9.2",
     "class-validator": "0.14.2",
     "glob": "11.0.3",
-    "reflect-metadata": "0.2.2"
+    "typescript": "5.9.2"
   }
 }
