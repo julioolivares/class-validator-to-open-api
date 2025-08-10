@@ -66,6 +66,18 @@ describe('SchemaTransformer', () => {
     assert.deepStrictEqual(result.nestedSchema.items, { type: 'string' });
   });
 
+  test('mapTypeToSchema should handle nested object types', () => {
+    const result = (transformer as any).mapTypeToSchema('Address');
+    assert.strictEqual(result.type, 'object');
+    assert.ok(result.nestedSchema);
+    assert.strictEqual(result.nestedSchema.type, 'object');
+  });
+
+  test('mapTypeToSchema should handle Partial types as objects', () => {
+    const result = (transformer as any).mapTypeToSchema('Partial<CompleteEntity>');
+    assert.strictEqual(result.type, 'object');
+  });
+
   test('getDecoratorName should extract decorator name from call expression', () => {
     const mockCallExpression = {
       expression: { 

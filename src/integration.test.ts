@@ -3,6 +3,7 @@ import assert from 'node:assert';
 import { SchemaTransformer } from './index.js';
 import { SimpleUser } from '../test-entities/simple.entity.js';
 import { ArrayEntity } from '../test-entities/array.entity.js';
+import { CompleteEntity } from '../test-entities/complete.entity.js';
 
 describe('SchemaTransformer Integration Tests', () => {
   test('should transform SimpleUser class correctly', () => {
@@ -56,5 +57,86 @@ describe('SchemaTransformer Integration Tests', () => {
     assert.strictEqual(result.schema.properties.boundedArray.type, 'array');
     assert.strictEqual(result.schema.properties.boundedArray.minItems, 1);
     assert.strictEqual(result.schema.properties.boundedArray.maxItems, 3);
+  });
+
+  test('should transform CompleteEntity with all decorators correctly', () => {
+    const transformer = new SchemaTransformer();
+    const result = transformer.transform(CompleteEntity);
+    
+    assert.strictEqual(result.name, 'CompleteEntity');
+    
+    // Validate all properties exist
+    const expectedProperties = ['id', 'name', 'email', 'active', 'createdAt', 'price', 'code', 'shortCode', 'tags', 'emails', 'numbers', 'address', 'profile'];
+    expectedProperties.forEach(prop => {
+      assert.ok(result.schema.properties[prop], `Property ${prop} should exist`);
+    });
+    
+    // Validate required fields
+    const expectedRequired = ['name', 'tags', 'address'];
+    expectedRequired.forEach(field => {
+      assert.ok(result.schema.required.includes(field), `Field ${field} should be required`);
+    });
+    
+    // IsInt with Min
+    assert.strictEqual(result.schema.properties.id.type, 'integer');
+    assert.strictEqual(result.schema.properties.id.format, 'int32');
+    assert.strictEqual(result.schema.properties.id.minimum, 1);
+    
+    // IsString with constraints
+    assert.strictEqual(result.schema.properties.name.type, 'string');
+    assert.strictEqual(result.schema.properties.name.minLength, 2);
+    assert.strictEqual(result.schema.properties.name.maxLength, 50);
+    assert.ok(result.schema.required.includes('name'));
+    
+    // IsEmail
+    assert.strictEqual(result.schema.properties.email.format, 'email');
+    
+    // IsBoolean
+    assert.strictEqual(result.schema.properties.active.type, 'boolean');
+    
+    // IsDate
+    assert.strictEqual(result.schema.properties.createdAt.type, 'string');
+    assert.strictEqual(result.schema.properties.createdAt.format, 'date-time');
+    
+    // IsNumber with IsPositive
+    assert.strictEqual(result.schema.properties.price.type, 'number');
+    assert.strictEqual(result.schema.properties.price.minimum, 0);
+    
+    // Length with both min and max
+    assert.strictEqual(result.schema.properties.code.minLength, 3);
+    assert.strictEqual(result.schema.properties.code.maxLength, 10);
+    
+    // Length with only min
+    assert.strictEqual(result.schema.properties.shortCode.minLength, 5);
+    
+    // Array with string items and ArrayNotEmpty
+    assert.strictEqual(result.schema.properties.tags.type, 'array');
+    assert.strictEqual(result.schema.properties.tags.minItems, 1);
+    assert.ok(result.schema.required.includes('tags'));
+    
+    // Array with email validation on items
+    assert.strictEqual(result.schema.properties.emails.type, 'array');
+    
+    // Array with size constraints and int items
+    assert.strictEqual(result.schema.properties.numbers.type, 'array');
+    assert.strictEqual(result.schema.properties.numbers.minItems, 1);
+    assert.strictEqual(result.schema.properties.numbers.maxItems, 5);
+    
+    // Nested object reference - complete Address schema
+    assert.strictEqual(result.schema.properties.address.type, 'object');
+    assert.ok(result.schema.required.includes('address'));
+    assert.ok(result.schema.properties.address.properties);
+    
+    // Validate complete Address schema structure
+    const addressSchema = result.schema.properties.address;
+    assert.strictEqual(addressSchema.properties.street.type, 'string');
+    assert.strictEqual(addressSchema.properties.city.type, 'string');
+    assert.strictEqual(addressSchema.properties.country.type, 'string');
+    assert.strictEqual(addressSchema.properties.country.minLength, 2);
+    assert.ok(addressSchema.required.includes('street'));
+    assert.ok(addressSchema.required.includes('city'));
+    
+    // Partial reference (should be object type)
+    assert.strictEqual(result.schema.properties.profile.type, 'object');
   });
 });
