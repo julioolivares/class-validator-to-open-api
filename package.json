@@ -1,0 +1,33 @@
+{
+  "name": "class-validator-to-open-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:watch": "tsc -w",
+    "build": "tsc",
+    "dev": "concurrently \"tsc -w\" \"nodemon\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "engineStrict": true,
+  "devDependencies": {
+    "@types/node": "24.2.1",
+    "concurrently": "9.2.0",
+    "nodemon": "3.1.10"
+  },
+  "dependencies": {
+    "class-transformer": "0.5.1",
+    "typescript": "5.9.2",
+    "class-validator": "0.14.2",
+    "glob": "11.0.3",
+    "reflect-metadata": "0.2.2"
+  }
+}

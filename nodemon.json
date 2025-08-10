@@ -1,0 +1,6 @@
+{
+  "watch": ["examples"],
+  "ext": "js",
+  "ignore": ["node_modules"],
+  "exec": "node ./dist/examples/parser.js"
+}
