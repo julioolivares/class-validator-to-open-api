@@ -39,6 +39,7 @@ const validatorDecorators = {
   IsEmail: { name: "IsEmail", type: "string", format: "email" },
   IsNotEmpty: { name: "IsNotEmpty" },
   IsBoolean: { name: "IsBoolean", type: "boolean" },
+  IsArray: { name: "IsArray", type: "array" },
   Min: { name: "Min" },
   Max: { name: "Max" },
   ArrayNotEmpty: { name: "ArrayNotEmpty" },

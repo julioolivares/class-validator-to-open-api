@@ -521,6 +521,9 @@ export class SchemaTransformer {
         case constants.validatorDecorators.IsPositive.name:
           schema.properties[propertyName].minimum = 0;
           break;
+        case constants.validatorDecorators.IsArray.name:
+          schema.properties[propertyName].type = constants.jsPrimitives.Array.value;
+          break;
         case constants.validatorDecorators.ArrayNotEmpty.name:
           schema.properties[propertyName].minItems = 1;
           if (!schema.required.includes(propertyName)) {
