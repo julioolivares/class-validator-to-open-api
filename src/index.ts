@@ -395,6 +395,11 @@ export class SchemaTransformer {
           type: constants.jsPrimitives.Buffer.value,
           format: constants.jsPrimitives.Buffer.format,
         }
+      case constants.jsPrimitives.UploadFile.type.toLowerCase():
+        return {
+          type: constants.jsPrimitives.UploadFile.value,
+          format: constants.jsPrimitives.UploadFile.format,
+        }
       default:
         // Handle nested objects
         try {

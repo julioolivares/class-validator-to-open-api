@@ -23,8 +23,10 @@ Perfect for projects where you need to:
 ## 📦 Installation
 
 ```bash
-npm install class-validator-to-open-api
+npm install class-validator-to-open-api class-validator
 ```
+
+> **Note**: `class-validator` is required as a peer dependency for the decorators to work.
 
 ## ⚙️ Requirements
 
@@ -63,8 +65,7 @@ class User {
   age: number
 }
 
-// Option 1: Transform with imported class (recommended)
-import { User } from './entities/user.js'
+// Transform the class to OpenAPI schema
 const transformer = new SchemaTransformer()
 const result = transformer.transform(User)
 
@@ -94,6 +95,53 @@ console.log(result)
       }
     },
     "required": ["name"]
+  }
+}
+```
+
+### File Upload Example
+
+```typescript
+import { SchemaTransformer } from 'class-validator-to-open-api'
+import { IsNotEmpty, IsOptional } from 'class-validator'
+
+// Define custom file type
+class UploadFile {}
+
+// Create your upload DTO
+class ProfileUpload {
+  @IsNotEmpty()
+  profilePicture: UploadFile
+
+  @IsOptional()
+  resume: UploadFile
+}
+
+// Generate schema
+const transformer = new SchemaTransformer()
+const schema = transformer.transform(ProfileUpload)
+
+console.log(schema)
+```
+
+**Output:**
+
+```json
+{
+  "name": "ProfileUpload",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "profilePicture": {
+        "type": "string",
+        "format": "binary"
+      },
+      "resume": {
+        "type": "string",
+        "format": "binary"
+      }
+    },
+    "required": ["profilePicture"]
   }
 }
 ```
@@ -151,10 +199,12 @@ class User {
   role: Role // Nested object
 
   files: Buffer[] // Binary files
+
+  @IsNotEmpty()
+  avatar: UploadFile // Custom file upload type
 }
 
 const transformer = new SchemaTransformer()
-import { User } from './entities/user.js'
 const schema = transformer.transform(User)
 ```
 
@@ -212,9 +262,13 @@ const schema = transformer.transform(User)
           "type": "string",
           "format": "binary"
         }
+      },
+      "avatar": {
+        "type": "string",
+        "format": "binary"
       }
     },
-    "required": ["id", "tags", "role"]
+    "required": ["id", "tags", "role", "avatar"]
   }
 }
 ```
@@ -227,7 +281,7 @@ const schema = transformer.transform(User)
 | -------------- | ------------------------------------- |
 | `@IsString()`  | `type: "string"`                      |
 | `@IsInt()`     | `type: "integer", format: "int32"`    |
-| `@IsNumber()`  | `type: "number"`                      |
+| `@IsNumber()`  | `type: "number", format: "double"`    |
 | `@IsBoolean()` | `type: "boolean"`                     |
 | `@IsEmail()`   | `type: "string", format: "email"`     |
 | `@IsDate()`    | `type: "string", format: "date-time"` |
@@ -242,7 +296,7 @@ const schema = transformer.transform(User)
 | `@Length(min, max)` | `minLength: min, maxLength: max` |
 | `@Min(n)`           | `minimum: n`                     |
 | `@Max(n)`           | `maximum: n`                     |
-| `@IsPositive()`     | `minimum: 0`                     |
+| `@IsPositive()`     | `minimum: 0` (≥ 0)               |
 
 ### Array Decorators
 
@@ -260,8 +314,64 @@ const schema = transformer.transform(User)
 | `Date`          | `type: "string", format: "date-time"` |
 | `Buffer`        | `type: "string", format: "binary"`    |
 | `Uint8Array`    | `type: "string", format: "binary"`    |
+| `UploadFile`    | `type: "string", format: "binary"`    |
 | `CustomClass`   | Nested object schema                  |
 | `Type[]`        | Array with typed items                |
+
+### 📁 Custom File Types
+
+The library supports custom file upload types that are automatically mapped to binary format:
+
+```typescript
+import { IsNotEmpty, IsArray } from 'class-validator'
+
+// Define your custom file type
+class UploadFile {}
+
+class DocumentUpload {
+  @IsNotEmpty()
+  document: UploadFile // Single file upload
+
+  @IsArray()
+  attachments: UploadFile[] // Multiple file uploads
+
+  avatar: UploadFile // Optional file upload
+}
+
+// Transform to OpenAPI schema
+const transformer = new SchemaTransformer()
+const schema = transformer.transform(DocumentUpload)
+console.log(schema)
+```
+
+**Generated Schema:**
+
+```json
+{
+  "name": "DocumentUpload",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "document": {
+        "type": "string",
+        "format": "binary"
+      },
+      "attachments": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "binary"
+        }
+      },
+      "avatar": {
+        "type": "string",
+        "format": "binary"
+      }
+    },
+    "required": ["document"]
+  }
+}
+```
 
 ## 📖 API Reference
 
@@ -270,21 +380,21 @@ const schema = transformer.transform(User)
 #### 🔧 Constructor
 
 ```typescript
-new SchemaTransformer(filePath?: string)
+new SchemaTransformer(tsConfigPath?: string)
 ```
 
 **Parameters:**
 
-- `filePath` - Optional path to a specific TypeScript file to include in analysis
+- `tsConfigPath` - Optional path to a specific TypeScript configuration file (defaults to 'tsconfig.json')
 
 **Example:**
 
 ```typescript
-// Analyze entire project
+// Use default tsconfig.json
 const transformer = new SchemaTransformer()
 
-// Focus on specific file
-const transformer = new SchemaTransformer('./entities/user.ts')
+// Use custom TypeScript config
+const transformer = new SchemaTransformer('./custom-tsconfig.json')
 ```
 
 #### 📋 Methods
@@ -313,7 +423,6 @@ Transforms a class constructor function into an OpenAPI schema object.
 **Example:**
 
 ```typescript
-import { User } from './entities/user.js'
 const schema = transformer.transform(User)
 ```
 
@@ -342,10 +451,44 @@ import 'reflect-metadata'
 const schema = transformClass(User)
 
 // After (with this package)
+import { SchemaTransformer } from 'class-validator-to-open-api'
 import { User } from './entities/user.js'
 const transformer = new SchemaTransformer()
 const schema = transformer.transform(User)
 ```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Error: "Cannot find module 'class-validator'"**
+
+```bash
+npm install class-validator
+```
+
+**Error: "Experimental decorators warning"**
+Add to your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true
+  }
+}
+```
+
+**Empty schema generated**
+
+- Ensure your class has class-validator decorators
+- Check that the class is properly exported/imported
+- Verify TypeScript compilation is working
+
+**Nested objects not working**
+
+- Make sure nested classes are in the same project
+- Ensure nested classes have their own decorators
+- Check file paths and imports
 
 ## 📄 License
 
