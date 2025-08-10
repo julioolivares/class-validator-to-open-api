@@ -6,10 +6,19 @@ import { messages, constants } from "./fixtures.js";
 import type { ValidationMetadata } from "class-validator/types/metadata/ValidationMetadata.js";
 import { type SchemaType, type Property } from "./types.js";
 
+/**
+ * Transforms class-validator decorated classes into OpenAPI schema objects.
+ * Analyzes TypeScript classes with validation decorators and generates corresponding JSON schemas.
+ */
 export class SchemaTransformer {
   private tsconfigPath: string;
   private storage: MetadataStorage;
 
+  /**
+   * Creates a new SchemaTransformer instance.
+   * @param tsConfigPath - Path to the TypeScript configuration file
+   * @public
+   */
   constructor(tsConfigPath: string = constants.TS_CONFIG_DEFAULT_PATH) {
     this.tsconfigPath = tsConfigPath;
     this.storage = getMetadataStorage();
@@ -17,6 +26,12 @@ export class SchemaTransformer {
     this.isSupportMetadata();
   }
 
+  /**
+   * Validates TypeScript configuration for decorator metadata support.
+   * @returns True if configuration supports metadata
+   * @throws Error if configuration is invalid or missing required options
+   * @private
+   */
   private isSupportMetadata(): boolean {
     try {
       const { config, error } = ts.readConfigFile(
@@ -46,6 +61,12 @@ export class SchemaTransformer {
     }
   }
 
+  /**
+   * Generates a JSON schema from class validation metadata.
+   * @param cls - The class constructor function to analyze
+   * @returns JSON schema object with properties and validation rules
+   * @private
+   */
   private getSchema(cls: Function) {
     const metadata = this.storage.groupByPropertyName(
       this.storage.getTargetValidationMetadatas(
@@ -71,6 +92,16 @@ export class SchemaTransformer {
     return schema;
   }
 
+  /**
+   * Parses validation metadata for a specific property and updates the schema.
+   * @param params - Object containing class, property name, validations, and schema
+   * @param params.cls - The class constructor function
+   * @param params.propertyName - Name of the property being processed
+   * @param params.validations - Array of validation metadata for the property
+   * @param params.schema - The schema object to update
+   * @returns Updated schema object
+   * @private
+   */
   private parseValidation({
     cls,
     propertyName,
@@ -99,6 +130,13 @@ export class SchemaTransformer {
     });
   }
 
+  /**
+   * Determines the primitive type and format for a class property.
+   * @param cls - The class constructor function
+   * @param propertyName - Name of the property to analyze
+   * @returns Object containing type, format, and nested property schema
+   * @private
+   */
   private getPrimitiveType(cls: Function, propertyName: string) {
     let propertyType = Reflect.getMetadata(
       "design:type",
@@ -145,6 +183,15 @@ export class SchemaTransformer {
     return { type, format, propertySchema };
   }
 
+  /**
+   * Processes array properties and applies validation rules to array items.
+   * @param params - Object containing class, property name, schema, and validations
+   * @param params.cls - The class constructor function
+   * @param params.propertyName - Name of the array property
+   * @param params.schema - The schema object to update
+   * @param params.validations - Array of validation metadata
+   * @private
+   */
   private parsePrimitiveArray({
     cls,
     propertyName,
@@ -218,6 +265,16 @@ export class SchemaTransformer {
     }
   }
 
+  /**
+   * Applies validation rules to schema properties based on their type.
+   * @param params - Object containing validations, property name, schema, and class
+   * @param params.validations - Array of validation metadata
+   * @param params.propertyName - Name of the property being validated
+   * @param params.schema - The schema object to update
+   * @param params.cls - The class constructor function
+   * @returns Updated schema object
+   * @private
+   */
   private parseToSchemaValidation({
     validations,
     propertyName,
@@ -245,6 +302,13 @@ export class SchemaTransformer {
     return schema;
   }
 
+  /**
+   * Maps class-validator decorators to JSON schema validation properties.
+   * @param validations - Array of validation metadata from class-validator
+   * @param schema - The schema object to update
+   * @param propertyName - Name of the property being validated
+   * @private
+   */
   private addValidationSchema(
     validations: ValidationMetadata[],
     schema: SchemaType,
@@ -322,6 +386,39 @@ export class SchemaTransformer {
     });
   }
 
+  /**
+   * Transforms a class with validation decorators into an OpenAPI schema object.
+   * @param cls - The class constructor function to transform
+   * @returns Object containing the class name and its corresponding JSON schema
+   * @example
+   * ```typescript
+   * class User {
+   *   @IsString()
+   *   @IsNotEmpty()
+   *   name: string;
+   * 
+   *   @IsEmail()
+   *   email: string;
+   * }
+   * 
+   * const transformer = new SchemaTransformer();
+   * const result = transformer.transform(User);
+   * 
+   * // Result:
+   * // {
+   * //   name: "User",
+   * //   schema: {
+   * //     type: "object",
+   * //     properties: {
+   * //       name: { type: "string" },
+   * //       email: { type: "string", format: "email" }
+   * //     },
+   * //     required: ["name"]
+   * //   }
+   * // }
+   * ```
+   * @public
+   */
   public transform(cls: Function): { [key: string]: any } {
     const schema = this.getSchema(cls);
 

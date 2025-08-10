@@ -1,21 +1,7 @@
 import 'reflect-metadata'
 import { Type } from 'class-transformer'
 import { IsString, Length, MinLength, ArrayNotEmpty, IsTimeZone,  IsDateString,  ArrayMaxSize, ArrayMinSize, MaxLength, Min, Max, IsInt, IsPositive, IsDate, IsEmail, IsNotEmpty, IsOptional, IsBoolean, IsNumber, IsArray } from 'class-validator'
-
-
-
-class Role {
-
-    @IsInt()
-    @IsPositive()
-    @IsNotEmpty()
-    id: number
-
-    @IsString()
-    @MinLength(1)
-    @MaxLength(65)
-    name: string
-}
+import { Role } from './role.entity.js';
 
 export class UserEntity {
     
