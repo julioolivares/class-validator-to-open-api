@@ -7,6 +7,7 @@ const messages = {
     emitDecoratorNoSet: `emitDecoratorMetadata option is not configure as true on tsconfig.json`,
     experimentalDecoratorsNoSet:
       "experimentalDecorators option is no set as true on tsconfig.json",
+    compilerOptionsNotFound: 'compilerOptions not found on tsconfig.json'  
   },
 };
 
@@ -23,21 +24,23 @@ const jsPrimitives = {
   Array: { type: "Array", value: "array" },
   Date: { type: "Date", value: "date" },
   Function: { type: "Function", value: "function" },
+  Buffer: { type: 'Buffer', value: 'string', format: 'binary' }, 
+  Uint8Array: {type: 'Uint8Array', value: 'string', format: 'binary'  }, 
+  UploadFile: {type: 'UploadFile', value: 'string', format: 'binary'  }
 };
 
 const validatorDecorators = {
   Length: { name: "length", type: "string" },
-  IsString: { name: "isString", type: "string" },
   MinLength: { name: "minLength", type: "string" },
   MaxLength: { name: "maxLength", type: "string" },
   IsInt: { name: "isInt", type: "integer", format: "int32" },
+  IsNumber: { name: "isNumber", type: "number", format: "double" },
+  IsString: { name: "isString", type: "string", format: "string" },
   IsPositive: { name: "isPositive", type: "number" },
   IsDate: { name: "isDate", type: "date", format: "date" },
   IsEmail: { name: "isEmail", type: "string", format: "email" },
   IsNotEmpty: { name: "isNotEmpty" },
-  IsOptional: { name: "isOptional" },
   IsBoolean: { name: "isBoolean", type: "boolean" },
-  IsNumber: { name: "isNumber", type: "number", format: "double" },
   Min: { name: "min" },
   Max: { name: "max" },
   ArrayNotEmpty: { name: "arrayNotEmpty" },

@@ -7,8 +7,8 @@ import type { ValidationMetadata } from "class-validator/types/metadata/Validati
 import { type SchemaType, type Property } from "./types.js";
 
 export class SchemaTransformer {
-  tsconfigPath: string;
-  storage: MetadataStorage;
+  private tsconfigPath: string;
+  private storage: MetadataStorage;
 
   constructor(tsConfigPath: string = constants.TS_CONFIG_DEFAULT_PATH) {
     this.tsconfigPath = tsConfigPath;
@@ -29,7 +29,7 @@ export class SchemaTransformer {
       }
 
       if (!config.compilerOptions) {
-        throw new Error("compilerOptions not found on tsconfig.json");
+        throw new Error(messages.errors.compilerOptionsNotFound);
       }
 
       if (!config.compilerOptions.emitDecoratorMetadata) {
@@ -44,12 +44,6 @@ export class SchemaTransformer {
     } catch (error) {
       throw error;
     }
-  }
-
-  public transform(cls: Function): { [key: string]: any } {
-    const schema = this.getSchema(cls);
-
-    return { name: cls.name, schema };
   }
 
   private getSchema(cls: Function) {
@@ -68,9 +62,9 @@ export class SchemaTransformer {
     for (const property in metadata) {
       this.parseValidation({
         cls,
-        name: property,
+        propertyName: property,
         schema,
-        validation: metadata[property] as ValidationMetadata[],
+        validations: metadata[property] as ValidationMetadata[],
       });
     }
 
@@ -79,30 +73,44 @@ export class SchemaTransformer {
 
   private parseValidation({
     cls,
-    name,
-    validation,
+    propertyName,
+    validations,
     schema,
   }: {
     schema: SchemaType;
-    name: string;
+    propertyName: string;
     cls: Function;
-    validation: ValidationMetadata[];
+    validations: ValidationMetadata[];
   }) {
-    let type = this.getPrimitiveType(cls, name);
+    let { type, format, propertySchema } = this.getPrimitiveType(cls, propertyName);
 
-    schema.properties[name] = { type };
+    if(Object.keys(propertySchema.properties).length) {
+      schema.properties[propertyName] = {...propertySchema, type };
+    }
+    else {
+      schema.properties[propertyName] = { type, format };
+    }
 
     return this.parseToSchemaValidation({
-      validation,
-      propertyName: name,
+      cls,
+      validations,
+      propertyName: propertyName,
       schema,
     });
   }
 
-  private getPrimitiveType(cls: Function, name: string) {
-    let type = Reflect.getMetadata("design:type", cls.prototype, name).name;
+  private getPrimitiveType(cls: Function, propertyName: string) {
+    let propertyType = Reflect.getMetadata(
+      "design:type",
+      cls.prototype,
+      propertyName
+    );
 
-    switch (type) {
+    let format;
+    let type: string 
+    let propertySchema: SchemaType = { properties: {}, required: [], type: "object" };
+
+    switch (propertyType.name) {
       case constants.jsPrimitives.String.type:
         type = constants.jsPrimitives.String.value;
         break;
@@ -121,35 +129,131 @@ export class SchemaTransformer {
       case constants.jsPrimitives.Array.type:
         type = constants.jsPrimitives.Array.value;
         break;
+      case constants.jsPrimitives.Uint8Array.type:
+      case constants.jsPrimitives.Buffer.type:
+      case constants.jsPrimitives.UploadFile.type:
+        type = constants.jsPrimitives.Buffer.value;
+        format = constants.jsPrimitives.Buffer.format;
+        break;
+
       default:
-        type = constants.jsPrimitives.String.value;
+        propertySchema = this.transform(propertyType).schema
+        type = constants.jsPrimitives.Object.value;
         break;
     }
 
-    return type;
+    return { type, format, propertySchema };
+  }
+
+  private parsePrimitiveArray({
+    cls,
+    propertyName,
+    schema,
+    validations,
+  }: {
+    cls: Function;
+    propertyName: string;
+    schema: SchemaType;
+    validations: ValidationMetadata[];
+  }) {
+    let propertyType = Reflect.getMetadata(
+      "design:type",
+      cls.prototype,
+      propertyName
+    );
+
+    schema.properties[propertyName].items = {
+      type: (propertyType.name as string).toLocaleLowerCase(),
+    };
+
+    if (propertyType.name === constants.jsPrimitives.Function.value) {
+      // Todo llamar recursivo para otro clase usando a this.transform
+    } else {
+      validations.forEach((validation) => {
+        const decoratorName = validation.name;
+
+        switch (decoratorName) {
+          case constants.validatorDecorators.IsString.name:
+            schema.properties[propertyName].items.format =
+              constants.validatorDecorators.IsString.format;
+            schema.properties[propertyName].items.type =
+              constants.validatorDecorators.IsString.type;
+            break;
+
+          case constants.validatorDecorators.IsInt.name:
+            schema.properties[propertyName].items.format =
+              constants.validatorDecorators.IsInt.format;
+            schema.properties[propertyName].items.type =
+              constants.validatorDecorators.IsInt.type;
+            break;
+
+          case constants.validatorDecorators.IsNumber.name:
+            schema.properties[propertyName].items.format =
+              constants.validatorDecorators.IsNumber.format;
+            schema.properties[propertyName].items.type =
+              constants.validatorDecorators.IsNumber.type;
+            break;
+
+          case constants.validatorDecorators.IsEmail.name:
+            schema.properties[propertyName].items.format =
+              constants.validatorDecorators.IsEmail.format;
+            schema.properties[propertyName].items.type =
+              constants.validatorDecorators.IsEmail.type;
+            break;
+
+          case constants.validatorDecorators.IsDate.name:
+            schema.properties[propertyName].items.format =
+              constants.validatorDecorators.IsDate.format;
+            schema.properties[propertyName].items.type =
+              constants.validatorDecorators.IsDate.type;
+
+            break;
+        }
+      });
+
+      if (!schema.properties[propertyName].items.format) {
+        schema.properties[propertyName].items.format =
+          constants.jsPrimitives.String.value;
+      }
+    }
   }
 
   private parseToSchemaValidation({
-    validation,
+    validations,
     propertyName,
     schema,
+    cls,
   }: {
-    validation: ValidationMetadata[];
+    validations: ValidationMetadata[];
     propertyName: string;
     schema: SchemaType;
+    cls: Function;
   }) {
-    const initialType = schema.properties[propertyName].type;
 
-    let newType = initialType;
 
-    validation.forEach((validation) => {
+    if (
+      schema.properties[propertyName].type ===
+      constants.jsPrimitives.Array.value
+    ) {
+      this.parsePrimitiveArray({ cls, propertyName, schema, validations });
+    } else {
+      this.addValidationSchema(validations, schema, propertyName);
+    }
+
+    schema.required = Array.from(new Set(schema.required || []));
+
+    return schema;
+  }
+
+  private addValidationSchema(
+    validations: ValidationMetadata[],
+    schema: SchemaType,
+    propertyName: string
+  ) {
+    validations.forEach((validation) => {
       const decoratorName = validation.name;
 
       switch (decoratorName) {
-        case constants.validatorDecorators.IsString.name:
-          newType = constants.jsPrimitives.String.value;
-          break;
-
         case constants.validatorDecorators.Length.name:
           schema.properties[propertyName].minLength = validation.constraints[0];
           if (validation.constraints[1])
@@ -166,69 +270,61 @@ export class SchemaTransformer {
           break;
 
         case constants.validatorDecorators.IsInt.name:
-          newType = "integer";
-          schema.properties[propertyName].format = "int32";
+          schema.properties[propertyName].format =
+            constants.validatorDecorators.IsInt.format;
+          schema.properties[propertyName].type =
+            constants.validatorDecorators.IsInt.type;
           break;
 
         case constants.validatorDecorators.IsEmail.name:
-          newType = "string";
-          schema.properties[propertyName].format = "email";
+          schema.properties[propertyName].format =
+            constants.validatorDecorators.IsEmail.format;
           break;
 
         case constants.validatorDecorators.IsPositive.name:
-          newType = constants.jsPrimitives.Number.value;
+          schema.properties[propertyName].minimum = 0;
           break;
 
         case constants.validatorDecorators.IsDate.name:
-          newType = constants.jsPrimitives.Date.value;
-          break;
-
-        case constants.validatorDecorators.IsEmail.name:
-          newType = constants.jsPrimitives.String.value;
+          schema.properties[propertyName].format =
+            constants.validatorDecorators.IsDate.format;
           break;
 
         case constants.validatorDecorators.IsNotEmpty.name:
           schema.required.push(propertyName);
           break;
 
-        case constants.validatorDecorators.IsOptional.name:
-          newType = constants.jsPrimitives.String.value;
-          break;
-
         case constants.validatorDecorators.IsBoolean.name:
-          newType = constants.jsPrimitives.Boolean.value;
-          break;
-
-        case constants.validatorDecorators.IsNumber.name:
-          newType = constants.jsPrimitives.Number.value;
+          schema.properties[propertyName].type =
+            constants.validatorDecorators.IsBoolean.type;
           break;
 
         case constants.validatorDecorators.Min.name:
-          newType = constants.jsPrimitives.Number.value;
+          schema.properties[propertyName].minimum = validation.constraints[0];
           break;
 
         case constants.validatorDecorators.Max.name:
-          newType = constants.jsPrimitives.Number.value;
+          schema.properties[propertyName].maximum = validation.constraints[0];
           break;
 
         case constants.validatorDecorators.ArrayNotEmpty.name:
+          schema.properties[propertyName].minItems = 1;
           schema.required.push(propertyName);
           break;
+
         case constants.validatorDecorators.ArrayMinSize.name:
           schema.properties[propertyName].minItems = validation.constraints[0];
           break;
         case constants.validatorDecorators.ArrayMaxSize.name:
           schema.properties[propertyName].maxItems = validation.constraints[0];
           break;
-
-        default:
-          newType = constants.jsPrimitives.String.value;
-          break;
       }
     });
+  }
 
-    schema.required = Array.from(new Set(schema.required));
+  public transform(cls: Function): { [key: string]: any } {
+    const schema = this.getSchema(cls);
 
-    return schema;
+    return { name: cls.name, schema };
   }
 }
