@@ -1,26 +1,19 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Debug TS",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "${workspaceFolder}/dist/examples/parser.js",
-            "preLaunchTask": "tsc: watch",
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "sourceMaps": true,
-            "console": "integratedTerminal",
-            "restart": true,
-            "runtimeExecutable": "nodemon",
-            "runtimeArgs": [
-                "--config",
-                "nodemon.json"
-            ]
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug TS",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/dist/examples/parser.js",
+      "preLaunchTask": "tsc: watch",
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "restart": true,
+      "runtimeExecutable": "nodemon",
+      "runtimeArgs": ["--config", "nodemon.json"]
+    }
+  ]
 }

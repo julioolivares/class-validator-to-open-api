@@ -1,15 +1,15 @@
-import { IsString, IsNotEmpty, MinLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength } from 'class-validator'
 
 export class Address {
   @IsString()
   @IsNotEmpty()
-  street: string;
+  street: string
 
   @IsString()
   @IsNotEmpty()
-  city: string;
+  city: string
 
   @IsString()
   @MinLength(2)
-  country: string;
+  country: string
 }

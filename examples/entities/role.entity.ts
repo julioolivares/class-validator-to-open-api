@@ -1,13 +1,19 @@
-import { IsString, MinLength, MaxLength, IsInt, IsPositive, IsNotEmpty } from 'class-validator'
+import {
+  IsString,
+  MinLength,
+  MaxLength,
+  IsInt,
+  IsPositive,
+  IsNotEmpty,
+} from 'class-validator'
 export class Role {
+  @IsInt()
+  @IsPositive()
+  @IsNotEmpty()
+  id: number
 
-    @IsInt()
-    @IsPositive()
-    @IsNotEmpty()
-    id: number
-
-    @IsString()
-    @MinLength(1)
-    @MaxLength(65)
-    name: string
+  @IsString()
+  @MinLength(1)
+  @MaxLength(65)
+  name: string
 }

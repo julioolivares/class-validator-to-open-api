@@ -1,7 +1,22 @@
-import { 
-  IsString, IsInt, IsNumber, IsBoolean, IsEmail, IsDate, IsNotEmpty, 
-  MinLength, MaxLength, Length, Min, Max, IsPositive, IsArray,
-  ArrayNotEmpty, ArrayMinSize, ArrayMaxSize, IsOptional
+import {
+  IsString,
+  IsInt,
+  IsNumber,
+  IsBoolean,
+  IsEmail,
+  IsDate,
+  IsNotEmpty,
+  MinLength,
+  MaxLength,
+  Length,
+  Min,
+  Max,
+  IsPositive,
+  IsArray,
+  ArrayNotEmpty,
+  ArrayMinSize,
+  ArrayMaxSize,
+  IsOptional,
 } from 'class-validator'
 
 export class TestEntity {

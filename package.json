@@ -11,7 +11,9 @@
     "pretest": "npm run build",
     "build:watch": "tsc -w",
     "build": "tsc",
-    "dev": "concurrently \"tsc -w\" \"nodemon\""
+    "dev": "concurrently \"tsc -w\" \"nodemon\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
@@ -24,11 +26,12 @@
   "devDependencies": {
     "@types/node": "24.2.1",
     "concurrently": "9.2.0",
-    "nodemon": "3.1.10"
+    "nodemon": "3.1.10",
+    "prettier": "3.6.2"
   },
   "dependencies": {
-    "typescript": "5.9.2",
     "class-validator": "0.14.2",
-    "glob": "11.0.3"
+    "glob": "11.0.3",
+    "typescript": "5.9.2"
   }
 }

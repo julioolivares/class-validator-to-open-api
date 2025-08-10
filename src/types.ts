@@ -1,5 +1,7 @@
-type Property = { [key: string]: any} & { type: string  }
-type SchemaType = { [key: string]: any } & { properties: { [key: string]: any} } & { required: string[]} & { type: string}  
+type Property = { [key: string]: any } & { type: string }
+type SchemaType = { [key: string]: any } & {
+  properties: { [key: string]: any }
+} & { required: string[] } & { type: string }
 
 /**
  * Information about a class-validator decorator found on a property.
@@ -7,9 +9,9 @@ type SchemaType = { [key: string]: any } & { properties: { [key: string]: any} }
  */
 interface DecoratorInfo {
   /** The name of the decorator (e.g., "IsString", "MinLength") */
-  name: string;
+  name: string
   /** Arguments passed to the decorator */
-  arguments: any[];
+  arguments: any[]
 }
 
 /**
@@ -18,11 +20,11 @@ interface DecoratorInfo {
  */
 interface PropertyInfo {
   /** The name of the property */
-  name: string;
+  name: string
   /** The TypeScript type of the property as a string */
-  type: string;
+  type: string
   /** Array of decorators applied to this property */
-  decorators: DecoratorInfo[];
+  decorators: DecoratorInfo[]
 }
 
 export { type SchemaType, type Property, type DecoratorInfo, type PropertyInfo }

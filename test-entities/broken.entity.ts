@@ -1,20 +1,20 @@
-import { IsString, IsNotEmpty, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray } from 'class-validator'
 
 export class BrokenEntity {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name: string
 
   // This should cause issues - circular reference
-  parent: BrokenEntity;
+  parent: BrokenEntity
 
   // Array without proper type decoration
   @IsArray()
-  items: any[];
+  items: any[]
 
   // Property without any decorators
-  undecoratedProperty: string;
+  undecoratedProperty: string
 
   // Complex type that doesn't exist
-  complexType: Map<string, Set<number>>;
+  complexType: Map<string, Set<number>>
 }

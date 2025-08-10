@@ -1,11 +1,11 @@
-import ts from "typescript";
+import ts from 'typescript'
 
-import { constants } from "./fixtures.js";
+import { constants } from './fixtures.js'
 import {
   type SchemaType,
   type DecoratorInfo,
   type PropertyInfo,
-} from "./types.js";
+} from './types.js'
 
 /**
  * Transforms class-validator decorated classes into OpenAPI schema objects.
@@ -25,19 +25,19 @@ export class SchemaTransformer {
    * TypeScript program instance for analyzing source files.
    * @private
    */
-  private program: ts.Program;
+  private program: ts.Program
 
   /**
    * TypeScript type checker for resolving types.
    * @private
    */
-  private checker: ts.TypeChecker;
+  private checker: ts.TypeChecker
 
   /**
    * Cache for storing transformed class schemas to avoid reprocessing.
    * @private
    */
-  private classCache = new Map<string, any>();
+  private classCache = new Map<string, any>()
 
   /**
    * Creates a new SchemaTransformer instance.
@@ -58,25 +58,25 @@ export class SchemaTransformer {
    */
   constructor(tsConfigPath: string = constants.TS_CONFIG_DEFAULT_PATH) {
     const { config, error } = ts.readConfigFile(
-      tsConfigPath || "tsconfig.json",
+      tsConfigPath || 'tsconfig.json',
       ts.sys.readFile
-    );
+    )
 
     if (error) {
       console.log(
         new Error(`Error reading tsconfig file: ${error.messageText}`).message
-      );
-      throw new Error(`Error reading tsconfig file: ${error.messageText}`);
+      )
+      throw new Error(`Error reading tsconfig file: ${error.messageText}`)
     }
 
     const { options, fileNames } = ts.parseJsonConfigFileContent(
       config,
       ts.sys,
-      "./"
-    );
+      './'
+    )
 
-    this.program = ts.createProgram(fileNames, options);
-    this.checker = this.program.getTypeChecker();
+    this.program = ts.createProgram(fileNames, options)
+    this.checker = this.program.getTypeChecker()
   }
 
   /**
@@ -93,23 +93,23 @@ export class SchemaTransformer {
     filePath?: string
   ): { name: string; schema: SchemaType } {
     if (this.classCache.has(className)) {
-      return this.classCache.get(className);
+      return this.classCache.get(className)
     }
 
     const sourceFiles = filePath
       ? [this.program.getSourceFile(filePath)].filter(Boolean)
-      : this.program.getSourceFiles().filter((sf) => !sf.isDeclarationFile);
+      : this.program.getSourceFiles().filter(sf => !sf.isDeclarationFile)
 
     for (const sourceFile of sourceFiles) {
-      const classNode = this.findClassByName(sourceFile!, className);
+      const classNode = this.findClassByName(sourceFile!, className)
       if (classNode) {
-        const result = this.transformClass(classNode);
-        this.classCache.set(className, result);
-        return result;
+        const result = this.transformClass(classNode)
+        this.classCache.set(className, result)
+        return result
       }
     }
 
-    throw new Error(`Class ${className} not found`);
+    throw new Error(`Class ${className} not found`)
   }
 
   /**
@@ -127,7 +127,7 @@ export class SchemaTransformer {
    * @public
    */
   public transform(cls: Function): { name: string; schema: SchemaType } {
-    return this.transformByName(cls.name);
+    return this.transformByName(cls.name)
   }
 
   /**
@@ -142,18 +142,18 @@ export class SchemaTransformer {
     sourceFile: ts.SourceFile,
     className: string
   ): ts.ClassDeclaration | undefined {
-    let result: ts.ClassDeclaration | undefined;
+    let result: ts.ClassDeclaration | undefined
 
     const visit = (node: ts.Node) => {
       if (ts.isClassDeclaration(node) && node.name?.text === className) {
-        result = node;
-        return;
+        result = node
+        return
       }
-      ts.forEachChild(node, visit);
-    };
+      ts.forEachChild(node, visit)
+    }
 
-    visit(sourceFile);
-    return result;
+    visit(sourceFile)
+    return result
   }
 
   /**
@@ -164,14 +164,14 @@ export class SchemaTransformer {
    * @private
    */
   private transformClass(classNode: ts.ClassDeclaration): {
-    name: string;
-    schema: SchemaType;
+    name: string
+    schema: SchemaType
   } {
-    const className = classNode.name?.text || "Unknown";
-    const properties = this.extractProperties(classNode);
-    const schema = this.generateSchema(properties);
+    const className = classNode.name?.text || 'Unknown'
+    const properties = this.extractProperties(classNode)
+    const schema = this.generateSchema(properties)
 
-    return { name: className, schema };
+    return { name: className, schema }
   }
 
   /**
@@ -182,7 +182,7 @@ export class SchemaTransformer {
    * @private
    */
   private extractProperties(classNode: ts.ClassDeclaration): PropertyInfo[] {
-    const properties: PropertyInfo[] = [];
+    const properties: PropertyInfo[] = []
 
     for (const member of classNode.members) {
       if (
@@ -190,19 +190,19 @@ export class SchemaTransformer {
         member.name &&
         ts.isIdentifier(member.name)
       ) {
-        const propertyName = member.name.text;
-        const type = this.getPropertyType(member);
-        const decorators = this.extractDecorators(member);
+        const propertyName = member.name.text
+        const type = this.getPropertyType(member)
+        const decorators = this.extractDecorators(member)
 
         properties.push({
           name: propertyName,
           type,
           decorators,
-        });
+        })
       }
     }
 
-    return properties;
+    return properties
   }
 
   /**
@@ -214,11 +214,11 @@ export class SchemaTransformer {
    */
   private getPropertyType(property: ts.PropertyDeclaration): string {
     if (property.type) {
-      return this.getTypeNodeToString(property.type);
+      return this.getTypeNodeToString(property.type)
     }
 
-    const type = this.checker.getTypeAtLocation(property);
-    return this.checker.typeToString(type);
+    const type = this.checker.getTypeAtLocation(property)
+    return this.checker.typeToString(type)
   }
 
   /**
@@ -233,21 +233,21 @@ export class SchemaTransformer {
       ts.isTypeReferenceNode(typeNode) &&
       ts.isIdentifier(typeNode.typeName)
     ) {
-      return typeNode.typeName.text;
+      return typeNode.typeName.text
     }
 
     switch (typeNode.kind) {
       case ts.SyntaxKind.StringKeyword:
-        return constants.jsPrimitives.String.value;
+        return constants.jsPrimitives.String.value
       case ts.SyntaxKind.NumberKeyword:
-        return constants.jsPrimitives.Number.value;
+        return constants.jsPrimitives.Number.value
       case ts.SyntaxKind.BooleanKeyword:
-        return constants.jsPrimitives.Boolean.value;
+        return constants.jsPrimitives.Boolean.value
       case ts.SyntaxKind.ArrayType:
-        const arrayType = typeNode as ts.ArrayTypeNode;
-        return `${this.getTypeNodeToString(arrayType.elementType)}[]`;
+        const arrayType = typeNode as ts.ArrayTypeNode
+        return `${this.getTypeNodeToString(arrayType.elementType)}[]`
       default:
-        return typeNode.getText();
+        return typeNode.getText()
     }
   }
 
@@ -259,7 +259,7 @@ export class SchemaTransformer {
    * @private
    */
   private extractDecorators(member: ts.PropertyDeclaration): DecoratorInfo[] {
-    const decorators: DecoratorInfo[] = [];
+    const decorators: DecoratorInfo[] = []
 
     if (member.modifiers) {
       for (const modifier of member.modifiers) {
@@ -267,19 +267,19 @@ export class SchemaTransformer {
           ts.isDecorator(modifier) &&
           ts.isCallExpression(modifier.expression)
         ) {
-          const decoratorName = this.getDecoratorName(modifier.expression);
-          const args = this.getDecoratorArguments(modifier.expression);
-          decorators.push({ name: decoratorName, arguments: args });
+          const decoratorName = this.getDecoratorName(modifier.expression)
+          const args = this.getDecoratorArguments(modifier.expression)
+          decorators.push({ name: decoratorName, arguments: args })
         } else if (
           ts.isDecorator(modifier) &&
           ts.isIdentifier(modifier.expression)
         ) {
-          decorators.push({ name: modifier.expression.text, arguments: [] });
+          decorators.push({ name: modifier.expression.text, arguments: [] })
         }
       }
     }
 
-    return decorators;
+    return decorators
   }
 
   /**
@@ -291,9 +291,9 @@ export class SchemaTransformer {
    */
   private getDecoratorName(callExpression: ts.CallExpression): string {
     if (ts.isIdentifier(callExpression.expression)) {
-      return callExpression.expression.text;
+      return callExpression.expression.text
     }
-    return "unknown";
+    return 'unknown'
   }
 
   /**
@@ -304,13 +304,13 @@ export class SchemaTransformer {
    * @private
    */
   private getDecoratorArguments(callExpression: ts.CallExpression): any[] {
-    return callExpression.arguments.map((arg) => {
-      if (ts.isNumericLiteral(arg)) return Number(arg.text);
-      if (ts.isStringLiteral(arg)) return arg.text;
-      if (arg.kind === ts.SyntaxKind.TrueKeyword) return true;
-      if (arg.kind === ts.SyntaxKind.FalseKeyword) return false;
-      return arg.getText();
-    });
+    return callExpression.arguments.map(arg => {
+      if (ts.isNumericLiteral(arg)) return Number(arg.text)
+      if (ts.isStringLiteral(arg)) return arg.text
+      if (arg.kind === ts.SyntaxKind.TrueKeyword) return true
+      if (arg.kind === ts.SyntaxKind.FalseKeyword) return false
+      return arg.getText()
+    })
   }
 
   /**
@@ -322,27 +322,25 @@ export class SchemaTransformer {
    */
   private generateSchema(properties: PropertyInfo[]): SchemaType {
     const schema: SchemaType = {
-      type: "object",
+      type: 'object',
       properties: {},
       required: [],
-    };
-
-    for (const property of properties) {
-      const { type, format, nestedSchema } = this.mapTypeToSchema(
-        property.type
-      );
-
-      if (nestedSchema) {
-        schema.properties[property.name] = nestedSchema;
-      } else {
-        schema.properties[property.name] = { type };
-        if (format) schema.properties[property.name].format = format;
-      }
-
-      this.applyDecorators(property.decorators, schema, property.name);
     }
 
-    return schema;
+    for (const property of properties) {
+      const { type, format, nestedSchema } = this.mapTypeToSchema(property.type)
+
+      if (nestedSchema) {
+        schema.properties[property.name] = nestedSchema
+      } else {
+        schema.properties[property.name] = { type }
+        if (format) schema.properties[property.name].format = format
+      }
+
+      this.applyDecorators(property.decorators, schema, property.name)
+    }
+
+    return schema
   }
 
   /**
@@ -354,59 +352,59 @@ export class SchemaTransformer {
    * @private
    */
   private mapTypeToSchema(type: string): {
-    type: string;
-    format?: string;
-    nestedSchema?: SchemaType;
+    type: string
+    format?: string
+    nestedSchema?: SchemaType
   } {
     // Handle arrays
-    if (type.endsWith("[]")) {
-      const elementType = type.slice(0, -2);
-      const elementSchema = this.mapTypeToSchema(elementType);
+    if (type.endsWith('[]')) {
+      const elementType = type.slice(0, -2)
+      const elementSchema = this.mapTypeToSchema(elementType)
       const items: any = elementSchema.nestedSchema || {
         type: elementSchema.type,
-      };
-      if (elementSchema.format) items.format = elementSchema.format;
+      }
+      if (elementSchema.format) items.format = elementSchema.format
 
       return {
-        type: "array",
+        type: 'array',
         nestedSchema: {
-          type: "array",
+          type: 'array',
           items,
           properties: {},
           required: [],
         },
-      };
+      }
     }
 
     // Handle primitives
     switch (type.toLowerCase()) {
       case constants.jsPrimitives.String.type.toLowerCase():
-        return { type: constants.jsPrimitives.String.value };
+        return { type: constants.jsPrimitives.String.value }
       case constants.jsPrimitives.Number.type.toLowerCase():
-        return { type: constants.jsPrimitives.Number.value };
+        return { type: constants.jsPrimitives.Number.value }
       case constants.jsPrimitives.Boolean.type.toLowerCase():
-        return { type: constants.jsPrimitives.Boolean.value };
+        return { type: constants.jsPrimitives.Boolean.value }
       case constants.jsPrimitives.Date.type.toLowerCase():
         return {
           type: constants.jsPrimitives.Date.value,
           format: constants.jsPrimitives.Date.format,
-        };
+        }
       case constants.jsPrimitives.Buffer.type.toLowerCase():
       case constants.jsPrimitives.Uint8Array.type.toLowerCase():
         return {
           type: constants.jsPrimitives.Buffer.value,
           format: constants.jsPrimitives.Buffer.format,
-        };
+        }
       default:
         // Handle nested objects
         try {
-          const nestedResult = this.transformByName(type);
+          const nestedResult = this.transformByName(type)
           return {
             type: constants.jsPrimitives.Object.value,
             nestedSchema: nestedResult.schema,
-          };
+          }
         } catch {
-          return { type: constants.jsPrimitives.Object.value };
+          return { type: constants.jsPrimitives.Object.value }
         }
     }
   }
@@ -427,115 +425,116 @@ export class SchemaTransformer {
   ): void {
     const isArrayType =
       schema.properties[propertyName].type ===
-      constants.jsPrimitives.Array.value;
+      constants.jsPrimitives.Array.value
 
     for (const decorator of decorators) {
-      const decoratorName = decorator.name;
+      const decoratorName = decorator.name
 
       switch (decoratorName) {
         case constants.validatorDecorators.IsString.name:
           if (!isArrayType) {
             schema.properties[propertyName].type =
-              constants.validatorDecorators.IsString.type;
+              constants.validatorDecorators.IsString.type
           } else if (schema.properties[propertyName].items) {
             schema.properties[propertyName].items.type =
-              constants.validatorDecorators.IsString.type;
+              constants.validatorDecorators.IsString.type
           }
-          break;
+          break
         case constants.validatorDecorators.IsInt.name:
           if (!isArrayType) {
             schema.properties[propertyName].type =
-              constants.validatorDecorators.IsInt.type;
+              constants.validatorDecorators.IsInt.type
             schema.properties[propertyName].format =
-              constants.validatorDecorators.IsInt.format;
+              constants.validatorDecorators.IsInt.format
           } else if (schema.properties[propertyName].items) {
             schema.properties[propertyName].items.type =
-              constants.validatorDecorators.IsInt.type;
+              constants.validatorDecorators.IsInt.type
             schema.properties[propertyName].items.format =
-              constants.validatorDecorators.IsInt.format;
+              constants.validatorDecorators.IsInt.format
           }
-          break;
+          break
         case constants.validatorDecorators.IsNumber.name:
           if (!isArrayType) {
             schema.properties[propertyName].type =
-              constants.validatorDecorators.IsNumber.type;
+              constants.validatorDecorators.IsNumber.type
           } else if (schema.properties[propertyName].items) {
             schema.properties[propertyName].items.type =
-              constants.validatorDecorators.IsNumber.type;
+              constants.validatorDecorators.IsNumber.type
           }
-          break;
+          break
         case constants.validatorDecorators.IsBoolean.name:
           if (!isArrayType) {
             schema.properties[propertyName].type =
-              constants.validatorDecorators.IsBoolean.type;
+              constants.validatorDecorators.IsBoolean.type
           } else if (schema.properties[propertyName].items) {
             schema.properties[propertyName].items.type =
-              constants.validatorDecorators.IsBoolean.type;
+              constants.validatorDecorators.IsBoolean.type
           }
-          break;
+          break
         case constants.validatorDecorators.IsEmail.name:
           if (!isArrayType) {
             schema.properties[propertyName].format =
-              constants.validatorDecorators.IsEmail.format;
+              constants.validatorDecorators.IsEmail.format
           } else if (schema.properties[propertyName].items) {
             schema.properties[propertyName].items.format =
-              constants.validatorDecorators.IsEmail.format;
+              constants.validatorDecorators.IsEmail.format
           }
-          break;
+          break
         case constants.validatorDecorators.IsDate.name:
           if (!isArrayType) {
             schema.properties[propertyName].type =
-              constants.validatorDecorators.IsDate.type;
+              constants.validatorDecorators.IsDate.type
             schema.properties[propertyName].format =
-              constants.validatorDecorators.IsDate.format;
+              constants.validatorDecorators.IsDate.format
           } else if (schema.properties[propertyName].items) {
             schema.properties[propertyName].items.type =
-              constants.validatorDecorators.IsDate.type;
+              constants.validatorDecorators.IsDate.type
             schema.properties[propertyName].items.format =
-              constants.validatorDecorators.IsDate.format;
+              constants.validatorDecorators.IsDate.format
           }
-          break;
+          break
         case constants.validatorDecorators.IsNotEmpty.name:
           if (!schema.required.includes(propertyName)) {
-            schema.required.push(propertyName);
+            schema.required.push(propertyName)
           }
-          break;
+          break
         case constants.validatorDecorators.MinLength.name:
-          schema.properties[propertyName].minLength = decorator.arguments[0];
-          break;
+          schema.properties[propertyName].minLength = decorator.arguments[0]
+          break
         case constants.validatorDecorators.MaxLength.name:
-          schema.properties[propertyName].maxLength = decorator.arguments[0];
-          break;
+          schema.properties[propertyName].maxLength = decorator.arguments[0]
+          break
         case constants.validatorDecorators.Length.name:
-          schema.properties[propertyName].minLength = decorator.arguments[0];
+          schema.properties[propertyName].minLength = decorator.arguments[0]
           if (decorator.arguments[1]) {
-            schema.properties[propertyName].maxLength = decorator.arguments[1];
+            schema.properties[propertyName].maxLength = decorator.arguments[1]
           }
-          break;
+          break
         case constants.validatorDecorators.Min.name:
-          schema.properties[propertyName].minimum = decorator.arguments[0];
-          break;
+          schema.properties[propertyName].minimum = decorator.arguments[0]
+          break
         case constants.validatorDecorators.Max.name:
-          schema.properties[propertyName].maximum = decorator.arguments[0];
-          break;
+          schema.properties[propertyName].maximum = decorator.arguments[0]
+          break
         case constants.validatorDecorators.IsPositive.name:
-          schema.properties[propertyName].minimum = 0;
-          break;
+          schema.properties[propertyName].minimum = 0
+          break
         case constants.validatorDecorators.IsArray.name:
-          schema.properties[propertyName].type = constants.jsPrimitives.Array.value;
-          break;
+          schema.properties[propertyName].type =
+            constants.jsPrimitives.Array.value
+          break
         case constants.validatorDecorators.ArrayNotEmpty.name:
-          schema.properties[propertyName].minItems = 1;
+          schema.properties[propertyName].minItems = 1
           if (!schema.required.includes(propertyName)) {
-            schema.required.push(propertyName);
+            schema.required.push(propertyName)
           }
-          break;
+          break
         case constants.validatorDecorators.ArrayMinSize.name:
-          schema.properties[propertyName].minItems = decorator.arguments[0];
-          break;
+          schema.properties[propertyName].minItems = decorator.arguments[0]
+          break
         case constants.validatorDecorators.ArrayMaxSize.name:
-          schema.properties[propertyName].maxItems = decorator.arguments[0];
-          break;
+          schema.properties[propertyName].maxItems = decorator.arguments[0]
+          break
       }
     }
   }

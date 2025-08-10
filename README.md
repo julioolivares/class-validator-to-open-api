@@ -1,10 +1,11 @@
 # 🔄 class-validator-to-open-api
 
-✨ Transform TypeScript classes with class-validator decorators into OpenAPI schema objects. 
+✨ Transform TypeScript classes with class-validator decorators into OpenAPI schema objects.
 
 ## 🎯 Why Use This?
 
 Perfect for projects where you need to:
+
 - 🚀 **API Development**: Generate OpenAPI schemas from your existing validation classes
 - 🧪 **Mock APIs**: Create realistic API documentation and mock servers
 - 📚 **Documentation**: Auto-generate API docs from your TypeScript models
@@ -44,33 +45,34 @@ npm install class-validator-to-open-api
 ### Basic Usage
 
 ```typescript
-import { SchemaTransformer } from 'class-validator-to-open-api';
-import { IsString, IsEmail, IsNotEmpty, IsInt, Min, Max } from 'class-validator';
+import { SchemaTransformer } from 'class-validator-to-open-api'
+import { IsString, IsEmail, IsNotEmpty, IsInt, Min, Max } from 'class-validator'
 
 // Define your class with validation decorators
 class User {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name: string
 
   @IsEmail()
-  email: string;
+  email: string
 
   @IsInt()
   @Min(18)
   @Max(100)
-  age: number;
+  age: number
 }
 
 // Option 1: Transform with imported class (recommended)
-import { User } from './entities/user.js';
-const transformer = new SchemaTransformer();
-const result = transformer.transform(User);
+import { User } from './entities/user.js'
+const transformer = new SchemaTransformer()
+const result = transformer.transform(User)
 
-console.log(result);
+console.log(result)
 ```
 
 **Output:**
+
 ```json
 {
   "name": "User",
@@ -99,55 +101,65 @@ console.log(result);
 ### Complex Example with Nested Objects and Arrays
 
 ```typescript
-import { 
-  IsString, IsInt, IsEmail, IsDate, IsArray, IsNotEmpty,
-  MinLength, MaxLength, Min, Max, ArrayNotEmpty 
-} from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  IsEmail,
+  IsDate,
+  IsArray,
+  IsNotEmpty,
+  MinLength,
+  MaxLength,
+  Min,
+  Max,
+  ArrayNotEmpty,
+} from 'class-validator'
 
 class Role {
   @IsInt()
   @IsNotEmpty()
-  id: number;
+  id: number
 
   @IsString()
   @MinLength(1)
   @MaxLength(50)
-  name: string;
+  name: string
 }
 
 class User {
   @IsInt()
   @IsNotEmpty()
   @Min(1)
-  id: number;
+  id: number
 
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  name: string;
+  name: string
 
   @IsEmail()
-  email: string;
+  email: string
 
   @IsArray()
   @ArrayNotEmpty()
-  tags: string[];
+  tags: string[]
 
   @IsDate()
-  createdAt: Date;
+  createdAt: Date
 
   @IsNotEmpty()
-  role: Role; // Nested object
+  role: Role // Nested object
 
-  files: Buffer[]; // Binary files
+  files: Buffer[] // Binary files
 }
 
-const transformer = new SchemaTransformer();
-import { User } from './entities/user.js';
-const schema = transformer.transform(User);
+const transformer = new SchemaTransformer()
+import { User } from './entities/user.js'
+const schema = transformer.transform(User)
 ```
 
 **Output:**
+
 ```json
 {
   "name": "User",
@@ -210,73 +222,83 @@ const schema = transformer.transform(User);
 ## 🎨 Supported Decorators
 
 ### Type Decorators
-| Decorator | Schema Property |
-|-----------|----------------|
-| `@IsString()` | `type: "string"` |
-| `@IsInt()` | `type: "integer", format: "int32"` |
-| `@IsNumber()` | `type: "number"` |
-| `@IsBoolean()` | `type: "boolean"` |
-| `@IsEmail()` | `type: "string", format: "email"` |
-| `@IsDate()` | `type: "string", format: "date-time"` |
+
+| Decorator      | Schema Property                       |
+| -------------- | ------------------------------------- |
+| `@IsString()`  | `type: "string"`                      |
+| `@IsInt()`     | `type: "integer", format: "int32"`    |
+| `@IsNumber()`  | `type: "number"`                      |
+| `@IsBoolean()` | `type: "boolean"`                     |
+| `@IsEmail()`   | `type: "string", format: "email"`     |
+| `@IsDate()`    | `type: "string", format: "date-time"` |
 
 ### Validation Decorators
-| Decorator | Schema Property |
-|-----------|----------------|
-| `@IsNotEmpty()` | Adds to `required` array |
-| `@MinLength(n)` | `minLength: n` |
-| `@MaxLength(n)` | `maxLength: n` |
+
+| Decorator           | Schema Property                  |
+| ------------------- | -------------------------------- |
+| `@IsNotEmpty()`     | Adds to `required` array         |
+| `@MinLength(n)`     | `minLength: n`                   |
+| `@MaxLength(n)`     | `maxLength: n`                   |
 | `@Length(min, max)` | `minLength: min, maxLength: max` |
-| `@Min(n)` | `minimum: n` |
-| `@Max(n)` | `maximum: n` |
-| `@IsPositive()` | `minimum: 0` |
+| `@Min(n)`           | `minimum: n`                     |
+| `@Max(n)`           | `maximum: n`                     |
+| `@IsPositive()`     | `minimum: 0`                     |
 
 ### Array Decorators
-| Decorator | Schema Property |
-|-----------|----------------|
-| `@IsArray()` | `type: "array"` |
+
+| Decorator          | Schema Property          |
+| ------------------ | ------------------------ |
+| `@IsArray()`       | `type: "array"`          |
 | `@ArrayNotEmpty()` | `minItems: 1` + required |
-| `@ArrayMinSize(n)` | `minItems: n` |
-| `@ArrayMaxSize(n)` | `maxItems: n` |
+| `@ArrayMinSize(n)` | `minItems: n`            |
+| `@ArrayMaxSize(n)` | `maxItems: n`            |
 
 ### Special Types
-| TypeScript Type | OpenAPI Schema |
-|-----------------|----------------|
-| `Date` | `type: "string", format: "date-time"` |
-| `Buffer` | `type: "string", format: "binary"` |
-| `Uint8Array` | `type: "string", format: "binary"` |
-| `CustomClass` | Nested object schema |
-| `Type[]` | Array with typed items |
+
+| TypeScript Type | OpenAPI Schema                        |
+| --------------- | ------------------------------------- |
+| `Date`          | `type: "string", format: "date-time"` |
+| `Buffer`        | `type: "string", format: "binary"`    |
+| `Uint8Array`    | `type: "string", format: "binary"`    |
+| `CustomClass`   | Nested object schema                  |
+| `Type[]`        | Array with typed items                |
 
 ## 📖 API Reference
 
 ### 🏗️ `SchemaTransformer`
 
 #### 🔧 Constructor
+
 ```typescript
 new SchemaTransformer(filePath?: string)
 ```
 
 **Parameters:**
+
 - `filePath` - Optional path to a specific TypeScript file to include in analysis
 
 **Example:**
+
 ```typescript
 // Analyze entire project
-const transformer = new SchemaTransformer();
+const transformer = new SchemaTransformer()
 
 // Focus on specific file
-const transformer = new SchemaTransformer('./entities/user.ts');
+const transformer = new SchemaTransformer('./entities/user.ts')
 ```
 
 #### 📋 Methods
 
 ##### ⚡ `transform(cls: Function)`
+
 Transforms a class constructor function into an OpenAPI schema object.
 
 **Parameters:**
+
 - `cls` - The class constructor function to transform
 
 **Returns:**
+
 ```typescript
 {
   name: string;
@@ -289,9 +311,10 @@ Transforms a class constructor function into an OpenAPI schema object.
 ```
 
 **Example:**
+
 ```typescript
-import { User } from './entities/user.js';
-const schema = transformer.transform(User);
+import { User } from './entities/user.js'
+const schema = transformer.transform(User)
 ```
 
 ## 🚀 Features
@@ -315,13 +338,13 @@ If you're migrating from a solution that requires `reflect-metadata`:
 
 ```typescript
 // Before (with reflect-metadata)
-import 'reflect-metadata';
-const schema = transformClass(User);
+import 'reflect-metadata'
+const schema = transformClass(User)
 
 // After (with this package)
-import { User } from './entities/user.js';
-const transformer = new SchemaTransformer();
-const schema = transformer.transform(User);
+import { User } from './entities/user.js'
+const transformer = new SchemaTransformer()
+const schema = transformer.transform(User)
 ```
 
 ## 📄 License

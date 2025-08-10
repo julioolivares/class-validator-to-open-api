@@ -19,7 +19,7 @@
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    
+
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -43,7 +43,7 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true
-  }, 
-  "include": ["src/**/*.ts", "examples/**/*.ts", "test-entities/**/*.ts"], 
+  },
+  "include": ["src/**/*.ts", "examples/**/*.ts", "test-entities/**/*.ts"],
   "exclude": ["dist/*"]
 }

@@ -1,57 +1,71 @@
-import { 
-  IsString, IsInt, IsNumber, IsBoolean, IsDate, IsEmail, IsPositive,
-  IsNotEmpty, MinLength, MaxLength, Length, Min, Max,
-  IsArray, ArrayNotEmpty, ArrayMinSize, ArrayMaxSize
-} from 'class-validator';
-import { Address } from './address.entity.js';
+import {
+  IsString,
+  IsInt,
+  IsNumber,
+  IsBoolean,
+  IsDate,
+  IsEmail,
+  IsPositive,
+  IsNotEmpty,
+  MinLength,
+  MaxLength,
+  Length,
+  Min,
+  Max,
+  IsArray,
+  ArrayNotEmpty,
+  ArrayMinSize,
+  ArrayMaxSize,
+} from 'class-validator'
+import { Address } from './address.entity.js'
 
 export class CompleteEntity {
   @IsInt()
   @Min(1)
-  id: number;
+  id: number
 
   @IsString()
   @IsNotEmpty()
   @MinLength(2)
   @MaxLength(50)
-  name: string;
+  name: string
 
   @IsEmail()
-  email: string;
+  email: string
 
   @IsBoolean()
-  active: boolean;
+  active: boolean
 
   @IsDate()
-  createdAt: Date;
+  createdAt: Date
 
   @IsNumber()
   @IsPositive()
-  price: number;
+  price: number
 
   @IsString()
   @Length(3, 10)
-  code: string;
+  code: string
 
   @IsString()
   @Length(5)
-  shortCode: string;
+  shortCode: string
 
   @IsArray()
   @IsString({ each: true })
   @ArrayNotEmpty()
-  tags: string[];
+  tags: string[]
 
   @IsArray()
-  emails: string[];
+  emails: string[]
 
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(5)
-  numbers: number[];
+  numbers: number[]
 
   @IsNotEmpty()
-  address: Address;
+  address: Address
 
-  profile: Partial<CompleteEntity>;
+  profile: Partial<CompleteEntity>
 }
