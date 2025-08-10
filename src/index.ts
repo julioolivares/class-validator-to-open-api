@@ -1,427 +1,539 @@
 import ts from "typescript";
-import "reflect-metadata";
-import { getMetadataStorage, type MetadataStorage } from "class-validator";
 
-import { messages, constants } from "./fixtures.js";
-import type { ValidationMetadata } from "class-validator/types/metadata/ValidationMetadata.js";
-import { type SchemaType, type Property } from "./types.js";
+import { constants } from "./fixtures.js";
+import {
+  type SchemaType,
+  type DecoratorInfo,
+  type PropertyInfo,
+} from "./types.js";
 
 /**
  * Transforms class-validator decorated classes into OpenAPI schema objects.
- * Analyzes TypeScript classes with validation decorators and generates corresponding JSON schemas.
+ * Analyzes TypeScript source files directly using the TypeScript compiler API.
+ *
+ * @example
+ * ```typescript
+ * const transformer = new SchemaTransformer('./entities/user.ts');
+ * const schema = transformer.transformByName('User');
+ * console.log(schema);
+ * ```
+ *
+ * @public
  */
 export class SchemaTransformer {
-  private tsconfigPath: string;
-  private storage: MetadataStorage;
+  /**
+   * TypeScript program instance for analyzing source files.
+   * @private
+   */
+  private program: ts.Program;
+
+  /**
+   * TypeScript type checker for resolving types.
+   * @private
+   */
+  private checker: ts.TypeChecker;
+
+  /**
+   * Cache for storing transformed class schemas to avoid reprocessing.
+   * @private
+   */
+  private classCache = new Map<string, any>();
 
   /**
    * Creates a new SchemaTransformer instance.
-   * @param tsConfigPath - Path to the TypeScript configuration file
+   *
+   * @param tsConfigPath - Optional path to a specific TypeScript config file
+   * @throws {Error} When TypeScript configuration cannot be loaded
+   *
+   * @example
+   * ```typescript
+   * // Transform classes from a specific file
+   * const transformer = new SchemaTransformer('./entities/user.ts');
+   *
+   * // Transform classes from entire project
+   * const transformer = new SchemaTransformer();
+   * ```
+   *
    * @public
    */
   constructor(tsConfigPath: string = constants.TS_CONFIG_DEFAULT_PATH) {
-    this.tsconfigPath = tsConfigPath;
-    this.storage = getMetadataStorage();
-
-    this.isSupportMetadata();
-  }
-
-  /**
-   * Validates TypeScript configuration for decorator metadata support.
-   * @returns True if configuration supports metadata
-   * @throws Error if configuration is invalid or missing required options
-   * @private
-   */
-  private isSupportMetadata(): boolean {
-    try {
-      const { config, error } = ts.readConfigFile(
-        this.tsconfigPath,
-        ts.sys.readFile
-      );
-
-      if (error) {
-        throw new Error(error.messageText.toString());
-      }
-
-      if (!config.compilerOptions) {
-        throw new Error(messages.errors.compilerOptionsNotFound);
-      }
-
-      if (!config.compilerOptions.emitDecoratorMetadata) {
-        throw new Error(messages.errors.emitDecoratorNotSet);
-      }
-
-      if (!config.compilerOptions.experimentalDecorators) {
-        throw new Error(messages.errors.experimentalDecoratorsNotSet);
-      }
-
-      return true;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Generates a JSON schema from class validation metadata.
-   * @param cls - The class constructor function to analyze
-   * @returns JSON schema object with properties and validation rules
-   * @private
-   */
-  private getSchema(cls: Function) {
-    const metadata = this.storage.groupByPropertyName(
-      this.storage.getTargetValidationMetadatas(
-        cls,
-        cls.name,
-        false,
-        false,
-        undefined
-      )
+    const { config, error } = ts.readConfigFile(
+      tsConfigPath || "tsconfig.json",
+      ts.sys.readFile
     );
 
-    let schema: SchemaType = { properties: {}, required: [], type: "object" };
-
-    for (const property in metadata) {
-      this.parseValidation({
-        cls,
-        propertyName: property,
-        schema,
-        validations: metadata[property] as ValidationMetadata[],
-      });
+    if (error) {
+      console.log(
+        new Error(`Error reading tsconfig file: ${error.messageText}`).message
+      );
+      throw new Error(`Error reading tsconfig file: ${error.messageText}`);
     }
 
-    return schema;
+    const { options, fileNames } = ts.parseJsonConfigFileContent(
+      config,
+      ts.sys,
+      "./"
+    );
+
+    this.program = ts.createProgram(fileNames, options);
+    this.checker = this.program.getTypeChecker();
   }
 
   /**
-   * Parses validation metadata for a specific property and updates the schema.
-   * @param params - Object containing class, property name, validations, and schema
-   * @param params.cls - The class constructor function
-   * @param params.propertyName - Name of the property being processed
-   * @param params.validations - Array of validation metadata for the property
-   * @param params.schema - The schema object to update
-   * @returns Updated schema object
+   * Transforms a class by its name into an OpenAPI schema object.
+   *
+   * @param className - The name of the class to transform
+   * @param filePath - Optional path to the file containing the class
+   * @returns Object containing the class name and its corresponding JSON schema
+   * @throws {Error} When the specified class cannot be found
    * @private
    */
-  private parseValidation({
-    cls,
-    propertyName,
-    validations,
-    schema,
-  }: {
+  private transformByName(
+    className: string,
+    filePath?: string
+  ): { name: string; schema: SchemaType } {
+    if (this.classCache.has(className)) {
+      return this.classCache.get(className);
+    }
+
+    const sourceFiles = filePath
+      ? [this.program.getSourceFile(filePath)].filter(Boolean)
+      : this.program.getSourceFiles().filter((sf) => !sf.isDeclarationFile);
+
+    for (const sourceFile of sourceFiles) {
+      const classNode = this.findClassByName(sourceFile!, className);
+      if (classNode) {
+        const result = this.transformClass(classNode);
+        this.classCache.set(className, result);
+        return result;
+      }
+    }
+
+    throw new Error(`Class ${className} not found`);
+  }
+
+  /**
+   * Transforms a class constructor function into an OpenAPI schema object.
+   *
+   * @param cls - The class constructor function to transform
+   * @returns Object containing the class name and its corresponding JSON schema
+   *
+   * @example
+   * ```typescript
+   * import { User } from './entities/user.js';
+   * const schema = transformer.transform(User);
+   * ```
+   *
+   * @public
+   */
+  public transform(cls: Function): { name: string; schema: SchemaType } {
+    return this.transformByName(cls.name);
+  }
+
+  /**
+   * Finds a class declaration by name within a source file.
+   *
+   * @param sourceFile - The TypeScript source file to search in
+   * @param className - The name of the class to find
+   * @returns The class declaration node if found, undefined otherwise
+   * @private
+   */
+  private findClassByName(
+    sourceFile: ts.SourceFile,
+    className: string
+  ): ts.ClassDeclaration | undefined {
+    let result: ts.ClassDeclaration | undefined;
+
+    const visit = (node: ts.Node) => {
+      if (ts.isClassDeclaration(node) && node.name?.text === className) {
+        result = node;
+        return;
+      }
+      ts.forEachChild(node, visit);
+    };
+
+    visit(sourceFile);
+    return result;
+  }
+
+  /**
+   * Transforms a TypeScript class declaration into a schema object.
+   *
+   * @param classNode - The TypeScript class declaration node
+   * @returns Object containing class name and generated schema
+   * @private
+   */
+  private transformClass(classNode: ts.ClassDeclaration): {
+    name: string;
     schema: SchemaType;
-    propertyName: string;
-    cls: Function;
-    validations: ValidationMetadata[];
-  }) {
-    let { type, format, propertySchema } = this.getPrimitiveType(cls, propertyName);
+  } {
+    const className = classNode.name?.text || "Unknown";
+    const properties = this.extractProperties(classNode);
+    const schema = this.generateSchema(properties);
 
-    if(Object.keys(propertySchema.properties).length) {
-      schema.properties[propertyName] = {...propertySchema, type };
-    }
-    else {
-      schema.properties[propertyName] = { type, format };
+    return { name: className, schema };
+  }
+
+  /**
+   * Extracts property information from a class declaration.
+   *
+   * @param classNode - The TypeScript class declaration node
+   * @returns Array of property information including names, types, and decorators
+   * @private
+   */
+  private extractProperties(classNode: ts.ClassDeclaration): PropertyInfo[] {
+    const properties: PropertyInfo[] = [];
+
+    for (const member of classNode.members) {
+      if (
+        ts.isPropertyDeclaration(member) &&
+        member.name &&
+        ts.isIdentifier(member.name)
+      ) {
+        const propertyName = member.name.text;
+        const type = this.getPropertyType(member);
+        const decorators = this.extractDecorators(member);
+
+        properties.push({
+          name: propertyName,
+          type,
+          decorators,
+        });
+      }
     }
 
-    return this.parseToSchemaValidation({
-      cls,
-      validations,
-      propertyName: propertyName,
-      schema,
+    return properties;
+  }
+
+  /**
+   * Gets the TypeScript type of a property as a string.
+   *
+   * @param property - The property declaration to analyze
+   * @returns String representation of the property's type
+   * @private
+   */
+  private getPropertyType(property: ts.PropertyDeclaration): string {
+    if (property.type) {
+      return this.getTypeNodeToString(property.type);
+    }
+
+    const type = this.checker.getTypeAtLocation(property);
+    return this.checker.typeToString(type);
+  }
+
+  /**
+   * Converts a TypeScript type node to its string representation.
+   *
+   * @param typeNode - The TypeScript type node to convert
+   * @returns String representation of the type
+   * @private
+   */
+  private getTypeNodeToString(typeNode: ts.TypeNode): string {
+    if (
+      ts.isTypeReferenceNode(typeNode) &&
+      ts.isIdentifier(typeNode.typeName)
+    ) {
+      return typeNode.typeName.text;
+    }
+
+    switch (typeNode.kind) {
+      case ts.SyntaxKind.StringKeyword:
+        return constants.jsPrimitives.String.value;
+      case ts.SyntaxKind.NumberKeyword:
+        return constants.jsPrimitives.Number.value;
+      case ts.SyntaxKind.BooleanKeyword:
+        return constants.jsPrimitives.Boolean.value;
+      case ts.SyntaxKind.ArrayType:
+        const arrayType = typeNode as ts.ArrayTypeNode;
+        return `${this.getTypeNodeToString(arrayType.elementType)}[]`;
+      default:
+        return typeNode.getText();
+    }
+  }
+
+  /**
+   * Extracts decorator information from a property declaration.
+   *
+   * @param member - The property declaration to analyze
+   * @returns Array of decorator information including names and arguments
+   * @private
+   */
+  private extractDecorators(member: ts.PropertyDeclaration): DecoratorInfo[] {
+    const decorators: DecoratorInfo[] = [];
+
+    if (member.modifiers) {
+      for (const modifier of member.modifiers) {
+        if (
+          ts.isDecorator(modifier) &&
+          ts.isCallExpression(modifier.expression)
+        ) {
+          const decoratorName = this.getDecoratorName(modifier.expression);
+          const args = this.getDecoratorArguments(modifier.expression);
+          decorators.push({ name: decoratorName, arguments: args });
+        } else if (
+          ts.isDecorator(modifier) &&
+          ts.isIdentifier(modifier.expression)
+        ) {
+          decorators.push({ name: modifier.expression.text, arguments: [] });
+        }
+      }
+    }
+
+    return decorators;
+  }
+
+  /**
+   * Gets the name of a decorator from a call expression.
+   *
+   * @param callExpression - The decorator call expression
+   * @returns The decorator name or "unknown" if not identifiable
+   * @private
+   */
+  private getDecoratorName(callExpression: ts.CallExpression): string {
+    if (ts.isIdentifier(callExpression.expression)) {
+      return callExpression.expression.text;
+    }
+    return "unknown";
+  }
+
+  /**
+   * Extracts arguments from a decorator call expression.
+   *
+   * @param callExpression - The decorator call expression
+   * @returns Array of parsed decorator arguments
+   * @private
+   */
+  private getDecoratorArguments(callExpression: ts.CallExpression): any[] {
+    return callExpression.arguments.map((arg) => {
+      if (ts.isNumericLiteral(arg)) return Number(arg.text);
+      if (ts.isStringLiteral(arg)) return arg.text;
+      if (arg.kind === ts.SyntaxKind.TrueKeyword) return true;
+      if (arg.kind === ts.SyntaxKind.FalseKeyword) return false;
+      return arg.getText();
     });
   }
 
   /**
-   * Determines the primitive type and format for a class property.
-   * @param cls - The class constructor function
-   * @param propertyName - Name of the property to analyze
-   * @returns Object containing type, format, and nested property schema
+   * Generates an OpenAPI schema from extracted property information.
+   *
+   * @param properties - Array of property information to process
+   * @returns Complete OpenAPI schema object with properties and validation rules
    * @private
    */
-  private getPrimitiveType(cls: Function, propertyName: string) {
-    let propertyType = Reflect.getMetadata(
-      "design:type",
-      cls.prototype,
-      propertyName
-    );
-
-    let format;
-    let type: string 
-    let propertySchema: SchemaType = { properties: {}, required: [], type: "object" };
-
-    switch (propertyType.name) {
-      case constants.jsPrimitives.String.type:
-        type = constants.jsPrimitives.String.value;
-        break;
-      case constants.jsPrimitives.Number.type:
-        type = constants.jsPrimitives.Number.value;
-        break;
-      case constants.jsPrimitives.Boolean.type:
-        type = constants.jsPrimitives.Boolean.value;
-        break;
-      case constants.jsPrimitives.Date.type:
-        type = constants.jsPrimitives.Date.value;
-        break;
-      case constants.jsPrimitives.Object.type:
-        type = constants.jsPrimitives.Object.value;
-        break;
-      case constants.jsPrimitives.Array.type:
-        type = constants.jsPrimitives.Array.value;
-        break;
-      case constants.jsPrimitives.Uint8Array.type:
-      case constants.jsPrimitives.Buffer.type:
-      case constants.jsPrimitives.UploadFile.type:
-        type = constants.jsPrimitives.Buffer.value;
-        format = constants.jsPrimitives.Buffer.format;
-        break;
-
-      default:
-        propertySchema = this.transform(propertyType).schema
-        type = constants.jsPrimitives.Object.value;
-        break;
-    }
-
-    return { type, format, propertySchema };
-  }
-
-  /**
-   * Processes array properties and applies validation rules to array items.
-   * @param params - Object containing class, property name, schema, and validations
-   * @param params.cls - The class constructor function
-   * @param params.propertyName - Name of the array property
-   * @param params.schema - The schema object to update
-   * @param params.validations - Array of validation metadata
-   * @private
-   */
-  private parsePrimitiveArray({
-    cls,
-    propertyName,
-    schema,
-    validations,
-  }: {
-    cls: Function;
-    propertyName: string;
-    schema: SchemaType;
-    validations: ValidationMetadata[];
-  }) {
-    let propertyType = Reflect.getMetadata(
-      "design:type",
-      cls.prototype,
-      propertyName
-    );
-
-    schema.properties[propertyName].items = {
-      type: (propertyType.name as string).toLocaleLowerCase(),
+  private generateSchema(properties: PropertyInfo[]): SchemaType {
+    const schema: SchemaType = {
+      type: "object",
+      properties: {},
+      required: [],
     };
 
-    if (propertyType.name === constants.jsPrimitives.Function.value) {
-      // Todo llamar recursivo para otro clase usando a this.transform
-    } else {
-      validations.forEach((validation) => {
-        const decoratorName = validation.name;
+    for (const property of properties) {
+      const { type, format, nestedSchema } = this.mapTypeToSchema(
+        property.type
+      );
 
-        switch (decoratorName) {
-          case constants.validatorDecorators.IsString.name:
-            schema.properties[propertyName].items.format =
-              constants.validatorDecorators.IsString.format;
-            schema.properties[propertyName].items.type =
-              constants.validatorDecorators.IsString.type;
-            break;
-
-          case constants.validatorDecorators.IsInt.name:
-            schema.properties[propertyName].items.format =
-              constants.validatorDecorators.IsInt.format;
-            schema.properties[propertyName].items.type =
-              constants.validatorDecorators.IsInt.type;
-            break;
-
-          case constants.validatorDecorators.IsNumber.name:
-            schema.properties[propertyName].items.format =
-              constants.validatorDecorators.IsNumber.format;
-            schema.properties[propertyName].items.type =
-              constants.validatorDecorators.IsNumber.type;
-            break;
-
-          case constants.validatorDecorators.IsEmail.name:
-            schema.properties[propertyName].items.format =
-              constants.validatorDecorators.IsEmail.format;
-            schema.properties[propertyName].items.type =
-              constants.validatorDecorators.IsEmail.type;
-            break;
-
-          case constants.validatorDecorators.IsDate.name:
-            schema.properties[propertyName].items.format =
-              constants.validatorDecorators.IsDate.format;
-            schema.properties[propertyName].items.type =
-              constants.validatorDecorators.IsDate.type;
-
-            break;
-        }
-      });
-
-      if (!schema.properties[propertyName].items.format) {
-        schema.properties[propertyName].items.format =
-          constants.jsPrimitives.String.value;
+      if (nestedSchema) {
+        schema.properties[property.name] = nestedSchema;
+      } else {
+        schema.properties[property.name] = { type };
+        if (format) schema.properties[property.name].format = format;
       }
+
+      this.applyDecorators(property.decorators, schema, property.name);
     }
-  }
-
-  /**
-   * Applies validation rules to schema properties based on their type.
-   * @param params - Object containing validations, property name, schema, and class
-   * @param params.validations - Array of validation metadata
-   * @param params.propertyName - Name of the property being validated
-   * @param params.schema - The schema object to update
-   * @param params.cls - The class constructor function
-   * @returns Updated schema object
-   * @private
-   */
-  private parseToSchemaValidation({
-    validations,
-    propertyName,
-    schema,
-    cls,
-  }: {
-    validations: ValidationMetadata[];
-    propertyName: string;
-    schema: SchemaType;
-    cls: Function;
-  }) {
-
-
-    if (
-      schema.properties[propertyName].type ===
-      constants.jsPrimitives.Array.value
-    ) {
-      this.parsePrimitiveArray({ cls, propertyName, schema, validations });
-    } else {
-      this.addValidationSchema(validations, schema, propertyName);
-    }
-
-    schema.required = Array.from(new Set(schema.required || []));
 
     return schema;
   }
 
   /**
-   * Maps class-validator decorators to JSON schema validation properties.
-   * @param validations - Array of validation metadata from class-validator
-   * @param schema - The schema object to update
-   * @param propertyName - Name of the property being validated
+   * Maps TypeScript types to OpenAPI schema types and formats.
+   * Handles primitive types, arrays, and nested objects recursively.
+   *
+   * @param type - The TypeScript type string to map
+   * @returns Object containing OpenAPI type, optional format, and nested schema
    * @private
    */
-  private addValidationSchema(
-    validations: ValidationMetadata[],
+  private mapTypeToSchema(type: string): {
+    type: string;
+    format?: string;
+    nestedSchema?: SchemaType;
+  } {
+    // Handle arrays
+    if (type.endsWith("[]")) {
+      const elementType = type.slice(0, -2);
+      const elementSchema = this.mapTypeToSchema(elementType);
+      const items: any = elementSchema.nestedSchema || {
+        type: elementSchema.type,
+      };
+      if (elementSchema.format) items.format = elementSchema.format;
+
+      return {
+        type: "array",
+        nestedSchema: {
+          type: "array",
+          items,
+          properties: {},
+          required: [],
+        },
+      };
+    }
+
+    // Handle primitives
+    switch (type.toLowerCase()) {
+      case constants.jsPrimitives.String.type.toLowerCase():
+        return { type: constants.jsPrimitives.String.value };
+      case constants.jsPrimitives.Number.type.toLowerCase():
+        return { type: constants.jsPrimitives.Number.value };
+      case constants.jsPrimitives.Boolean.type.toLowerCase():
+        return { type: constants.jsPrimitives.Boolean.value };
+      case constants.jsPrimitives.Date.type.toLowerCase():
+        return {
+          type: constants.jsPrimitives.Date.value,
+          format: constants.jsPrimitives.Date.format,
+        };
+      case constants.jsPrimitives.Buffer.type.toLowerCase():
+      case constants.jsPrimitives.Uint8Array.type.toLowerCase():
+        return {
+          type: constants.jsPrimitives.Buffer.value,
+          format: constants.jsPrimitives.Buffer.format,
+        };
+      default:
+        // Handle nested objects
+        try {
+          const nestedResult = this.transformByName(type);
+          return {
+            type: constants.jsPrimitives.Object.value,
+            nestedSchema: nestedResult.schema,
+          };
+        } catch {
+          return { type: constants.jsPrimitives.Object.value };
+        }
+    }
+  }
+
+  /**
+   * Applies class-validator decorators to schema properties.
+   * Maps validation decorators to their corresponding OpenAPI schema constraints.
+   *
+   * @param decorators - Array of decorator information to apply
+   * @param schema - The schema object to modify
+   * @param propertyName - Name of the property being processed
+   * @private
+   */
+  private applyDecorators(
+    decorators: DecoratorInfo[],
     schema: SchemaType,
     propertyName: string
-  ) {
-    validations.forEach((validation) => {
-      const decoratorName = validation.name;
+  ): void {
+    const isArrayType =
+      schema.properties[propertyName].type ===
+      constants.jsPrimitives.Array.value;
+
+    for (const decorator of decorators) {
+      const decoratorName = decorator.name;
 
       switch (decoratorName) {
-        case constants.validatorDecorators.Length.name:
-          schema.properties[propertyName].minLength = validation.constraints[0];
-          if (validation.constraints[1])
-            schema.properties[propertyName].maxLength =
-              validation.constraints[1];
+        case constants.validatorDecorators.IsString.name:
+          if (!isArrayType) {
+            schema.properties[propertyName].type =
+              constants.validatorDecorators.IsString.type;
+          } else if (schema.properties[propertyName].items) {
+            schema.properties[propertyName].items.type =
+              constants.validatorDecorators.IsString.type;
+          }
           break;
-
-        case constants.validatorDecorators.MinLength.name:
-          schema.properties[propertyName].minLength = validation.constraints[0];
-          break;
-
-        case constants.validatorDecorators.MaxLength.name:
-          schema.properties[propertyName].maxLength = validation.constraints[0];
-          break;
-
         case constants.validatorDecorators.IsInt.name:
-          schema.properties[propertyName].format =
-            constants.validatorDecorators.IsInt.format;
-          schema.properties[propertyName].type =
-            constants.validatorDecorators.IsInt.type;
+          if (!isArrayType) {
+            schema.properties[propertyName].type =
+              constants.validatorDecorators.IsInt.type;
+            schema.properties[propertyName].format =
+              constants.validatorDecorators.IsInt.format;
+          } else if (schema.properties[propertyName].items) {
+            schema.properties[propertyName].items.type =
+              constants.validatorDecorators.IsInt.type;
+            schema.properties[propertyName].items.format =
+              constants.validatorDecorators.IsInt.format;
+          }
           break;
-
+        case constants.validatorDecorators.IsNumber.name:
+          if (!isArrayType) {
+            schema.properties[propertyName].type =
+              constants.validatorDecorators.IsNumber.type;
+          } else if (schema.properties[propertyName].items) {
+            schema.properties[propertyName].items.type =
+              constants.validatorDecorators.IsNumber.type;
+          }
+          break;
+        case constants.validatorDecorators.IsBoolean.name:
+          if (!isArrayType) {
+            schema.properties[propertyName].type =
+              constants.validatorDecorators.IsBoolean.type;
+          } else if (schema.properties[propertyName].items) {
+            schema.properties[propertyName].items.type =
+              constants.validatorDecorators.IsBoolean.type;
+          }
+          break;
         case constants.validatorDecorators.IsEmail.name:
-          schema.properties[propertyName].format =
-            constants.validatorDecorators.IsEmail.format;
+          if (!isArrayType) {
+            schema.properties[propertyName].format =
+              constants.validatorDecorators.IsEmail.format;
+          } else if (schema.properties[propertyName].items) {
+            schema.properties[propertyName].items.format =
+              constants.validatorDecorators.IsEmail.format;
+          }
           break;
-
+        case constants.validatorDecorators.IsDate.name:
+          if (!isArrayType) {
+            schema.properties[propertyName].type =
+              constants.validatorDecorators.IsDate.type;
+            schema.properties[propertyName].format =
+              constants.validatorDecorators.IsDate.format;
+          } else if (schema.properties[propertyName].items) {
+            schema.properties[propertyName].items.type =
+              constants.validatorDecorators.IsDate.type;
+            schema.properties[propertyName].items.format =
+              constants.validatorDecorators.IsDate.format;
+          }
+          break;
+        case constants.validatorDecorators.IsNotEmpty.name:
+          if (!schema.required.includes(propertyName)) {
+            schema.required.push(propertyName);
+          }
+          break;
+        case constants.validatorDecorators.MinLength.name:
+          schema.properties[propertyName].minLength = decorator.arguments[0];
+          break;
+        case constants.validatorDecorators.MaxLength.name:
+          schema.properties[propertyName].maxLength = decorator.arguments[0];
+          break;
+        case constants.validatorDecorators.Length.name:
+          schema.properties[propertyName].minLength = decorator.arguments[0];
+          if (decorator.arguments[1]) {
+            schema.properties[propertyName].maxLength = decorator.arguments[1];
+          }
+          break;
+        case constants.validatorDecorators.Min.name:
+          schema.properties[propertyName].minimum = decorator.arguments[0];
+          break;
+        case constants.validatorDecorators.Max.name:
+          schema.properties[propertyName].maximum = decorator.arguments[0];
+          break;
         case constants.validatorDecorators.IsPositive.name:
           schema.properties[propertyName].minimum = 0;
           break;
-
-        case constants.validatorDecorators.IsDate.name:
-          schema.properties[propertyName].format =
-            constants.validatorDecorators.IsDate.format;
-          break;
-
-        case constants.validatorDecorators.IsNotEmpty.name:
-          schema.required.push(propertyName);
-          break;
-
-        case constants.validatorDecorators.IsBoolean.name:
-          schema.properties[propertyName].type =
-            constants.validatorDecorators.IsBoolean.type;
-          break;
-
-        case constants.validatorDecorators.Min.name:
-          schema.properties[propertyName].minimum = validation.constraints[0];
-          break;
-
-        case constants.validatorDecorators.Max.name:
-          schema.properties[propertyName].maximum = validation.constraints[0];
-          break;
-
         case constants.validatorDecorators.ArrayNotEmpty.name:
           schema.properties[propertyName].minItems = 1;
-          schema.required.push(propertyName);
+          if (!schema.required.includes(propertyName)) {
+            schema.required.push(propertyName);
+          }
           break;
-
         case constants.validatorDecorators.ArrayMinSize.name:
-          schema.properties[propertyName].minItems = validation.constraints[0];
+          schema.properties[propertyName].minItems = decorator.arguments[0];
           break;
         case constants.validatorDecorators.ArrayMaxSize.name:
-          schema.properties[propertyName].maxItems = validation.constraints[0];
+          schema.properties[propertyName].maxItems = decorator.arguments[0];
           break;
       }
-    });
-  }
-
-  /**
-   * Transforms a class with validation decorators into an OpenAPI schema object.
-   * @param cls - The class constructor function to transform
-   * @returns Object containing the class name and its corresponding JSON schema
-   * @example
-   * ```typescript
-   * class User {
-   *   @IsString()
-   *   @IsNotEmpty()
-   *   name: string;
-   * 
-   *   @IsEmail()
-   *   email: string;
-   * }
-   * 
-   * const transformer = new SchemaTransformer();
-   * const result = transformer.transform(User);
-   * 
-   * // Result:
-   * // {
-   * //   name: "User",
-   * //   schema: {
-   * //     type: "object",
-   * //     properties: {
-   * //       name: { type: "string" },
-   * //       email: { type: "string", format: "email" }
-   * //     },
-   * //     required: ["name"]
-   * //   }
-   * // }
-   * ```
-   * @public
-   */
-  public transform(cls: Function): { [key: string]: any } {
-    const schema = this.getSchema(cls);
-
-    return { name: cls.name, schema };
+    }
   }
 }

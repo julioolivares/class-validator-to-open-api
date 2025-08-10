@@ -1,6 +1,4 @@
-import 'reflect-metadata'
-import { Type } from 'class-transformer'
-import { IsString, Length, MinLength, ArrayNotEmpty, IsTimeZone,  IsDateString,  ArrayMaxSize, ArrayMinSize, MaxLength, Min, Max, IsInt, IsPositive, IsDate, IsEmail, IsNotEmpty, IsOptional, IsBoolean, IsNumber, IsArray } from 'class-validator'
+import { IsString, Length, MinLength, ArrayNotEmpty, ArrayMaxSize, ArrayMinSize, MaxLength, Min, Max, IsInt, IsPositive, IsDate, IsEmail, IsNotEmpty, IsOptional, IsBoolean, IsNumber, IsArray } from 'class-validator'
 import { Role } from './role.entity.js';
 
 export class UserEntity {
@@ -29,7 +27,6 @@ export class UserEntity {
     @IsEmail()
     email: string;
     
-    
     @IsString()
     @Length(8, 60)
     password: string;
@@ -39,15 +36,12 @@ export class UserEntity {
     @IsString({each: true})
     pictures: Uint8Array[]
 
-    @Type(() => Date)
     @IsDate()
     createdAt: Date;
     
-    @Type(() => Date)
     @IsDate()
     updatedAt: Date;
 
-    @Type(() => Role)
     @IsNotEmpty()
     role: Role
 }

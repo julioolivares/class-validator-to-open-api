@@ -24,10 +24,8 @@
     "nodemon": "3.1.10"
   },
   "dependencies": {
-    "class-transformer": "0.5.1",
     "typescript": "5.9.2",
     "class-validator": "0.14.2",
-    "glob": "11.0.3",
-    "reflect-metadata": "0.2.2"
+    "glob": "11.0.3"
   }
 }

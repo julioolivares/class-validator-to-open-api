@@ -1,7 +1,4 @@
-
-import { IsString, Length, MinLength, ArrayNotEmpty, IsTimeZone,  IsDateString,  ArrayMaxSize, ArrayMinSize, MaxLength, Min, Max, IsInt, IsPositive, IsDate, IsEmail, IsNotEmpty, IsOptional, IsBoolean, IsNumber, IsArray } from 'class-validator'
-import { Type } from 'class-transformer'
-import { UserEntity } from './user.entity.js';
+import { IsString, MinLength, MaxLength, IsInt, IsPositive, IsNotEmpty } from 'class-validator'
 export class Role {
 
     @IsInt()
