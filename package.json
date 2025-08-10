@@ -1,6 +1,6 @@
 {
   "name": "class-validator-to-open-api",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Transform TypeScript classes with class-validator decorators into OpenAPI schema objects",
   "main": "dist/src/index.js",
   "types": "dist/index.d.ts",

@@ -2,6 +2,16 @@
 
 ✨ Transform TypeScript classes with class-validator decorators into OpenAPI schema objects.
 
+## 📋 About OpenAPI
+
+**OpenAPI** (formerly known as Swagger) is a specification for describing REST APIs. It's the industry standard that allows developers to document their APIs in a structured, machine-readable format.
+
+- **Current Version**: OpenAPI 3.1.0 ([Official Specification](https://spec.openapis.org/oas/v3.1.0))
+- **What it does**: Defines the structure, endpoints, request/response formats, and validation rules of your API
+- **Why it matters**: Enables automatic documentation generation, client SDK creation, API testing, and ensures consistency across your API ecosystem
+
+This library generates OpenAPI 3.1.0 compatible schema objects from your TypeScript validation classes, bridging the gap between your code and API documentation.
+
 ## 🎯 Why Use This?
 
 Perfect for projects where you need to:
