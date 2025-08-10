@@ -4,6 +4,11 @@
   "description": "",
   "main": "index.js",
   "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "node --test dist/src/**/*.test.js",
     "test:watch": "node --test --watch dist/src/**/*.test.js",
