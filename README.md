@@ -69,7 +69,7 @@ class User {
 const transformer = new SchemaTransformer()
 const result = transformer.transform(User)
 
-console.log(result)
+console.log(JSON.stringify(result, '', 2))
 ```
 
 **Output:**
@@ -121,7 +121,7 @@ class ProfileUpload {
 const transformer = new SchemaTransformer()
 const schema = transformer.transform(ProfileUpload)
 
-console.log(schema)
+console.log(JSON.stringify(result, '', 2))
 ```
 
 **Output:**
@@ -341,7 +341,7 @@ class DocumentUpload {
 // Transform to OpenAPI schema
 const transformer = new SchemaTransformer()
 const schema = transformer.transform(DocumentUpload)
-console.log(schema)
+console.log(JSON.stringify(result, '', 2))
 ```
 
 **Generated Schema:**
