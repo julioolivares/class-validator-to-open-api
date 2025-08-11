@@ -10,23 +10,23 @@ let config
 if (isTest) {
   // Test build configuration
   const testFiles = glob.sync('src/**/*.test.ts')
-  
+
   config = testFiles.map(file => ({
     input: file,
     output: {
       file: file.replace('src/', 'dist/').replace('.ts', '.js'),
       format: 'es',
-      sourcemap: true
+      sourcemap: true,
     },
     plugins: [
       nodeResolve(),
       typescript({
         tsconfig: './tsconfig.json',
         declaration: false,
-        sourceMap: true
-      })
+        sourceMap: true,
+      }),
     ],
-    external: ['node:test', 'node:assert', 'typescript', 'class-validator']
+    external: ['node:test', 'node:assert', 'typescript', 'class-validator'],
   }))
 } else {
   // Production build configuration
@@ -37,7 +37,7 @@ if (isTest) {
       output: {
         file: 'dist/index.esm.js',
         format: 'es',
-        sourcemap: isDev
+        sourcemap: isDev,
       },
       plugins: [
         nodeResolve(),
@@ -47,10 +47,10 @@ if (isTest) {
           declarationDir: 'dist',
           declarationMap: isDev,
           sourceMap: isDev,
-          outDir: 'dist'
-        })
+          rootDir: 'src',
+        }),
       ],
-      external: ['typescript', 'class-validator']
+      external: ['typescript', 'class-validator'],
     },
     // CommonJS build
     {
@@ -58,7 +58,7 @@ if (isTest) {
       output: {
         file: 'dist/index.cjs.js',
         format: 'cjs',
-        sourcemap: isDev
+        sourcemap: isDev,
       },
       plugins: [
         nodeResolve(),
@@ -66,11 +66,11 @@ if (isTest) {
           tsconfig: './tsconfig.json',
           declaration: false,
           declarationMap: false,
-          sourceMap: isDev
-        })
+          sourceMap: isDev,
+        }),
       ],
-      external: ['typescript', 'class-validator']
-    }
+      external: ['typescript', 'class-validator'],
+    },
   ]
 }
 
