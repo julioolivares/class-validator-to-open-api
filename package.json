@@ -65,7 +65,7 @@
     "class-validator": "^0.14.0"
   },
   "dependencies": {
-    "typescript": "5.9.2"
+    "typescript": "5.0.4"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
