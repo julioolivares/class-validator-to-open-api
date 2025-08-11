@@ -66,10 +66,10 @@
     "class-validator": "0.14.0"
   },
   "dependencies": {
-    "nodemon": "3.1.10",
     "typescript": "5.0.2"
   },
   "devDependencies": {
+    "nodemon": "3.1.10",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-typescript": "11.1.6",
     "@types/node": "24.2.1",
