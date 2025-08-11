@@ -18,6 +18,8 @@ export default [
         tsconfig: './tsconfig.json',
         declaration: true,
         declarationDir: 'dist',
+        declarationMap: isDev,
+        sourceMap: isDev,
         outDir: 'dist'
       })
     ],
@@ -35,7 +37,9 @@ export default [
       nodeResolve(),
       typescript({
         tsconfig: './tsconfig.json',
-        declaration: false
+        declaration: false,
+        declarationMap: false,
+        sourceMap: isDev
       })
     ],
     external: ['typescript', 'class-validator']
