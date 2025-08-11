@@ -57,7 +57,7 @@ npm install class-validator-to-open-api class-validator
 ### Basic Usage
 
 ```typescript
-import { SchemaTransformer } from 'class-validator-to-open-api'
+import { transform } from 'class-validator-to-open-api'
 import { IsString, IsEmail, IsNotEmpty, IsInt, Min, Max } from 'class-validator'
 
 // Define your class with validation decorators
@@ -76,10 +76,9 @@ class User {
 }
 
 // Transform the class to OpenAPI schema
-const transformer = new SchemaTransformer()
-const result = transformer.transform(User)
+const result = transform(User)
 
-console.log(JSON.stringify(result, '', 2))
+console.log(JSON.stringify(result, null, 2))
 ```
 
 **Output:**
@@ -112,7 +111,7 @@ console.log(JSON.stringify(result, '', 2))
 ### File Upload Example
 
 ```typescript
-import { SchemaTransformer } from 'class-validator-to-open-api'
+import { transform } from 'class-validator-to-open-api'
 import { IsNotEmpty, IsOptional } from 'class-validator'
 
 // Define custom file type
@@ -127,11 +126,10 @@ class ProfileUpload {
   resume: UploadFile
 }
 
-// Generate schema
-const transformer = new SchemaTransformer()
-const schema = transformer.transform(ProfileUpload)
+// Generate schema using convenience function
+const schema = transform(ProfileUpload)
 
-console.log(JSON.stringify(result, '', 2))
+console.log(JSON.stringify(schema, null, 2))
 ```
 
 **Output:**
@@ -214,8 +212,7 @@ class User {
   avatar: UploadFile // Custom file upload type
 }
 
-const transformer = new SchemaTransformer()
-const schema = transformer.transform(User)
+const schema = transform(User)
 ```
 
 **Output:**
@@ -333,6 +330,7 @@ const schema = transformer.transform(User)
 The library supports custom file upload types that are automatically mapped to binary format:
 
 ```typescript
+import { transform } from 'class-validator-to-open-api'
 import { IsNotEmpty, IsArray } from 'class-validator'
 
 // Define your custom file type
@@ -349,9 +347,8 @@ class DocumentUpload {
 }
 
 // Transform to OpenAPI schema
-const transformer = new SchemaTransformer()
-const schema = transformer.transform(DocumentUpload)
-console.log(JSON.stringify(result, '', 2))
+const schema = transform(DocumentUpload)
+console.log(JSON.stringify(schema, null, 2))
 ```
 
 **Generated Schema:**
@@ -385,33 +382,9 @@ console.log(JSON.stringify(result, '', 2))
 
 ## 📖 API Reference
 
-### 🏗️ `SchemaTransformer`
+### ⚡ `transform(cls: Function)`
 
-#### 🔧 Constructor
-
-```typescript
-new SchemaTransformer(tsConfigPath?: string)
-```
-
-**Parameters:**
-
-- `tsConfigPath` - Optional path to a specific TypeScript configuration file (defaults to 'tsconfig.json')
-
-**Example:**
-
-```typescript
-// Use default tsconfig.json
-const transformer = new SchemaTransformer()
-
-// Use custom TypeScript config
-const transformer = new SchemaTransformer('./custom-tsconfig.json')
-```
-
-#### 📋 Methods
-
-##### ⚡ `transform(cls: Function)`
-
-Transforms a class constructor function into an OpenAPI schema object.
+Transforms a class constructor function into an OpenAPI schema object. Uses an internal singleton for optimal performance.
 
 **Parameters:**
 
@@ -433,19 +406,24 @@ Transforms a class constructor function into an OpenAPI schema object.
 **Example:**
 
 ```typescript
-const schema = transformer.transform(User)
+import { transform } from 'class-validator-to-open-api'
+import { User } from './entities/user.js'
+
+const schema = transform(User)
+console.log(JSON.stringify(schema, null, 2))
 ```
 
 ## 🚀 Features
 
 - ✅ **No Runtime Dependencies**: Uses TypeScript Compiler API instead of reflect-metadata
+- ✅ **Singleton Pattern**: Optimized performance with shared instance and caching
 - ✅ **Nested Objects**: Automatically handles complex object relationships
 - ✅ **Array Support**: Full support for typed arrays with validation
-- ✅ **Caching**: Built-in caching for improved performance
+- ✅ **Built-in Caching**: Avoids reprocessing the same classes
 - ✅ **Type Safety**: Full TypeScript support with proper type definitions
 - ✅ **Flexible**: Works with any TypeScript project configuration
 - ✅ **Comprehensive**: Supports all major class-validator decorators
-- ✅ **Simple API**: Single public method for easy integration
+- ✅ **Simple API**: Multiple usage patterns for different needs
 
 ## 🔧 Migration from reflect-metadata
 
@@ -461,10 +439,9 @@ import 'reflect-metadata'
 const schema = transformClass(User)
 
 // After (with this package)
-import { SchemaTransformer } from 'class-validator-to-open-api'
+import { transform } from 'class-validator-to-open-api'
 import { User } from './entities/user.js'
-const transformer = new SchemaTransformer()
-const schema = transformer.transform(User)
+const schema = transform(User)
 ```
 
 ## 🔧 Troubleshooting

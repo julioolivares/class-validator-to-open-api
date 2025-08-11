@@ -1,15 +1,14 @@
 import { test, describe } from 'node:test'
 import assert from 'node:assert'
-import { SchemaTransformer } from '../index.js'
+import { transform } from '../index.js'
 import { SimpleUser } from './test-entities/simple.entity.js'
 import { ArrayEntity } from './test-entities/array.entity.js'
 import { CompleteEntity } from './test-entities/complete.entity.js'
 import { BrokenEntity } from './test-entities/broken.entity.js'
 
-describe('SchemaTransformer Integration Tests', () => {
+describe('Transform Function Integration Tests', () => {
   test('should transform SimpleUser class correctly', () => {
-    const transformer = new SchemaTransformer()
-    const result = transformer.transform(SimpleUser)
+    const result = transform(SimpleUser)
 
     assert.strictEqual(result.name, 'SimpleUser')
     assert.strictEqual(result.schema.type, 'object')
@@ -33,8 +32,7 @@ describe('SchemaTransformer Integration Tests', () => {
   })
 
   test('should transform ArrayEntity with array decorators correctly', () => {
-    const transformer = new SchemaTransformer()
-    const result = transformer.transform(ArrayEntity)
+    const result = transform(ArrayEntity)
 
     assert.strictEqual(result.name, 'ArrayEntity')
 
@@ -61,8 +59,7 @@ describe('SchemaTransformer Integration Tests', () => {
   })
 
   test('should transform CompleteEntity with all decorators correctly', () => {
-    const transformer = new SchemaTransformer()
-    const result = transformer.transform(CompleteEntity)
+    const result = transform(CompleteEntity)
 
     assert.strictEqual(result.name, 'CompleteEntity')
 
@@ -194,8 +191,7 @@ describe('SchemaTransformer Integration Tests', () => {
   })
 
   test('should handle problematic BrokenEntity and expose issues', () => {
-    const transformer = new SchemaTransformer()
-    const result = transformer.transform(BrokenEntity)
+    const result = transform(BrokenEntity)
 
     assert.strictEqual(result.name, 'BrokenEntity')
 

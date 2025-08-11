@@ -1,8 +1,7 @@
 import { UserEntity } from './entities/user.entity.js'
-import { SchemaTransformer } from '../src/index.js'
+import { transform } from '../src/index.js'
 
-const transformer = new SchemaTransformer()
-
-const schema = transformer.transform(UserEntity)
+// Using the transform function
+const schema = transform(UserEntity)
 
 console.log(JSON.stringify(schema, null, 2))

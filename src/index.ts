@@ -10,17 +10,23 @@ import {
 /**
  * Transforms class-validator decorated classes into OpenAPI schema objects.
  * Analyzes TypeScript source files directly using the TypeScript compiler API.
+ * Implemented as a singleton for performance optimization.
  *
  * @example
  * ```typescript
- * const transformer = new SchemaTransformer('./entities/user.ts');
- * const schema = transformer.transformByName('User');
+ * const transformer = SchemaTransformer.getInstance();
+ * const schema = transformer.transform(User);
  * console.log(schema);
  * ```
  *
  * @public
  */
 export class SchemaTransformer {
+  /**
+   * Singleton instance
+   * @private
+   */
+  private static instance: SchemaTransformer | null = null
   /**
    * TypeScript program instance for analyzing source files.
    * @private
@@ -40,23 +46,13 @@ export class SchemaTransformer {
   private classCache = new Map<string, any>()
 
   /**
-   * Creates a new SchemaTransformer instance.
+   * Private constructor for singleton pattern.
    *
    * @param tsConfigPath - Optional path to a specific TypeScript config file
    * @throws {Error} When TypeScript configuration cannot be loaded
-   *
-   * @example
-   * ```typescript
-   * // Transform classes from a specific file
-   * const transformer = new SchemaTransformer('./entities/user.ts');
-   *
-   * // Transform classes from entire project
-   * const transformer = new SchemaTransformer();
-   * ```
-   *
-   * @public
+   * @private
    */
-  constructor(tsConfigPath: string = constants.TS_CONFIG_DEFAULT_PATH) {
+  private constructor(tsConfigPath: string = constants.TS_CONFIG_DEFAULT_PATH) {
     const { config, error } = ts.readConfigFile(
       tsConfigPath || 'tsconfig.json',
       ts.sys.readFile
@@ -113,6 +109,26 @@ export class SchemaTransformer {
   }
 
   /**
+   * Gets the singleton instance of SchemaTransformer.
+   *
+   * @param tsConfigPath - Optional path to a specific TypeScript config file (only used on first call)
+   * @returns The singleton instance
+   *
+   * @example
+   * ```typescript
+   * const transformer = SchemaTransformer.getInstance();
+   * ```
+   *
+   * @public
+   */
+  public static getInstance(tsConfigPath?: string): SchemaTransformer {
+    if (!SchemaTransformer.instance) {
+      SchemaTransformer.instance = new SchemaTransformer(tsConfigPath)
+    }
+    return SchemaTransformer.instance
+  }
+
+  /**
    * Transforms a class constructor function into an OpenAPI schema object.
    *
    * @param cls - The class constructor function to transform
@@ -121,6 +137,7 @@ export class SchemaTransformer {
    * @example
    * ```typescript
    * import { User } from './entities/user.js';
+   * const transformer = SchemaTransformer.getInstance();
    * const schema = transformer.transform(User);
    * ```
    *
@@ -543,4 +560,25 @@ export class SchemaTransformer {
       }
     }
   }
+}
+
+/**
+ * Convenience function to transform a class using the singleton instance.
+ *
+ * @param cls - The class constructor function to transform
+ * @returns Object containing the class name and its corresponding JSON schema
+ *
+ * @example
+ * ```typescript
+ * import { transform } from 'class-validator-to-open-api'
+ * import { User } from './entities/user.js'
+ *
+ * const schema = transform(User)
+ * console.log(schema)
+ * ```
+ *
+ * @public
+ */
+export function transform(cls: Function): { name: string; schema: SchemaType } {
+  return SchemaTransformer.getInstance().transform(cls)
 }
