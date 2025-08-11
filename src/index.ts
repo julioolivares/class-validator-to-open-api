@@ -21,7 +21,7 @@ import {
  *
  * @public
  */
-export class SchemaTransformer {
+class SchemaTransformer {
   /**
    * Singleton instance
    * @private

@@ -48,6 +48,7 @@ if (isTest) {
           declarationMap: isDev,
           sourceMap: isDev,
           rootDir: 'src',
+          exclude: ['**/*.test.ts', '**/__test__/**/*']
         }),
       ],
       external: ['typescript', 'class-validator'],
@@ -67,6 +68,7 @@ if (isTest) {
           declaration: false,
           declarationMap: false,
           sourceMap: isDev,
+          exclude: ['**/*.test.ts', '**/__test__/**/*']
         }),
       ],
       external: ['typescript', 'class-validator'],
