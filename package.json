@@ -27,7 +27,8 @@
     "build:watch": "rm -rf dist && rollup -c -w",
     "dev": "rollup -c -w",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepublish": "pnpm run build"
   },
   "repository": {
     "type": "git",
