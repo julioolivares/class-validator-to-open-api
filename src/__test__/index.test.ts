@@ -1,12 +1,12 @@
 import { test, describe, beforeEach } from 'node:test'
 import assert from 'node:assert'
-import { SchemaTransformer } from './index.js'
+import { SchemaTransformer } from '../index.js'
 import ts from 'typescript'
 import {
   type SchemaType,
   type DecoratorInfo,
   type PropertyInfo,
-} from './types.js'
+} from '../types.js'
 
 // Test helper class to expose private methods
 class TestableSchemaTransformer extends SchemaTransformer {

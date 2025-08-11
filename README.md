@@ -40,7 +40,7 @@ npm install class-validator-to-open-api class-validator
 
 ## ⚙️ Requirements
 
-- Node.js >= 16.0.0
+- Node.js >= 14.0.0
 - TypeScript with minimal compiler options in `tsconfig.json`:
   ```json
   {

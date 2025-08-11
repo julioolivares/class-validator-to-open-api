@@ -1,10 +1,10 @@
 import { test, describe } from 'node:test'
 import assert from 'node:assert'
-import { SchemaTransformer } from './index.js'
-import { SimpleUser } from '../test-entities/simple.entity.js'
-import { ArrayEntity } from '../test-entities/array.entity.js'
-import { CompleteEntity } from '../test-entities/complete.entity.js'
-import { BrokenEntity } from '../test-entities/broken.entity.js'
+import { SchemaTransformer } from '../index.js'
+import { SimpleUser } from './test-entities/simple.entity.js'
+import { ArrayEntity } from './test-entities/array.entity.js'
+import { CompleteEntity } from './test-entities/complete.entity.js'
+import { BrokenEntity } from './test-entities/broken.entity.js'
 
 describe('SchemaTransformer Integration Tests', () => {
   test('should transform SimpleUser class correctly', () => {

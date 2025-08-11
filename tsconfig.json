@@ -36,14 +36,16 @@
     // Recommended Options
     "strict": true,
     // "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
     "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "examples/**/*.ts", "test-entities/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "examples/**/*.ts",
+    "src/__test__/test-entities/**/*.ts"
+  ],
   "exclude": ["dist/*"]
 }
