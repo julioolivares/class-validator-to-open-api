@@ -19,11 +19,11 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test dist/src/**/*.test.js",
-    "test:watch": "node --test --watch dist/src/**/*.test.js",
-    "test:coverage": "node --test --experimental-test-coverage dist/src/**/*.test.js",
-    "pretest": "npm run build",
+    "test": "npm run build:test && node --test dist/**/*.test.js",
+    "test:watch": "npm run build:test && node --test --watch dist/**/*.test.js",
+    "test:coverage": "npm run build:test && node --test --experimental-test-coverage dist/**/*.test.js",
     "build": "rm -rf dist && rollup -c",
+    "build:test": "rm -rf dist && BUILD_TARGET=test rollup -c",
     "build:watch": "rm -rf dist && rollup -c -w",
     "dev": "rollup -c -w",
     "format": "prettier --write .",
@@ -62,18 +62,19 @@
   },
   "engineStrict": true,
   "peerDependencies": {
-    "class-validator": "^0.14.0"
+    "class-validator": "0.14.0"
   },
   "dependencies": {
-    "typescript": "5.0.4"
+    "typescript": "4.9.5"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-typescript": "^11.1.6",
+    "@rollup/plugin-node-resolve": "15.2.3",
+    "@rollup/plugin-typescript": "11.1.6",
     "@types/node": "24.2.1",
     "class-validator": "0.14.2",
+    "glob": "10.3.10",
     "prettier": "3.6.2",
-    "rollup": "^4.21.2",
-    "tslib": "^2.7.0"
+    "rollup": "4.21.2",
+    "tslib": "2.7.0"
   }
 }
