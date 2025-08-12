@@ -35,7 +35,7 @@ if (isTest) {
     {
       input: 'src/index.ts',
       output: {
-        file: 'dist/index.esm.js',
+        file: 'dist/index.esm.mjs',
         format: 'es',
         sourcemap: isDev,
       },
@@ -48,7 +48,7 @@ if (isTest) {
           declarationMap: isDev,
           sourceMap: isDev,
           rootDir: 'src',
-          exclude: ['**/*.test.ts', '**/__test__/**/*']
+          exclude: ['**/*.test.ts', '**/__test__/**/*'],
         }),
       ],
       external: ['typescript', 'class-validator'],
@@ -57,7 +57,7 @@ if (isTest) {
     {
       input: 'src/index.ts',
       output: {
-        file: 'dist/index.cjs.js',
+        file: 'dist/index.cjs',
         format: 'cjs',
         sourcemap: isDev,
       },
@@ -68,7 +68,7 @@ if (isTest) {
           declaration: false,
           declarationMap: false,
           sourceMap: isDev,
-          exclude: ['**/*.test.ts', '**/__test__/**/*']
+          exclude: ['**/*.test.ts', '**/__test__/**/*'],
         }),
       ],
       external: ['typescript', 'class-validator'],
