@@ -35,7 +35,7 @@ if (isTest) {
     {
       input: 'src/index.ts',
       output: {
-        file: 'dist/index.esm.mjs',
+        file: 'dist/index.esm.js',
         format: 'es',
         sourcemap: isDev,
       },
@@ -57,7 +57,7 @@ if (isTest) {
     {
       input: 'src/index.ts',
       output: {
-        file: 'dist/index.cjs',
+        file: 'dist/index.cjs.js',
         format: 'cjs',
         sourcemap: isDev,
       },
