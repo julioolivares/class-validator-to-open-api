@@ -9,7 +9,7 @@
   "type": "module",
   "exports": {
     "import": "./dist/index.esm.js",
-    "require": "./dist/index.cjs.cjs",
+    "require": "./dist/index.cjs",
     "types": "./dist/index.d.ts"
   },
   "files": [
