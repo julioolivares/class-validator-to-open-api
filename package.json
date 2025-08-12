@@ -3,7 +3,6 @@
   "version": "1.0.13",
   "description": "Transform TypeScript classes with class-validator decorators into OpenAPI schema objects",
   "main": "./dist/index.js",
-  "type": "module",
   "module": "./dist/index.esm.js",
   "types": "./dist/index.d.ts",
   "typings": "./dist/index.d.ts",
