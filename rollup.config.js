@@ -6,6 +6,10 @@ const isTest = process.env.BUILD_TARGET === 'test'
 
 let config
 const external = ['typescript', 'class-validator', 'path']
+const plugins = {
+  commonJs: [typescript()],
+  esm: [typescript()],
+}
 
 if (isTest) {
   // Test build configuration
@@ -18,13 +22,7 @@ if (isTest) {
       format: 'esm',
       sourcemap: true,
     },
-    plugins: [
-      typescript({
-        tsconfig: './tsconfig.json',
-        declaration: false,
-        sourceMap: true,
-      }),
-    ],
+    plugins: plugins.esm,
     external: ['node:test', 'node:assert', 'typescript', 'class-validator'],
   }))
 } else {
@@ -36,38 +34,22 @@ if (isTest) {
       output: {
         file: 'dist/index.esm.js',
         format: 'esm',
-        sourcemap: isDev,
+        sourcemap: true,
+        inlineDynamicImports: true,
       },
-      plugins: [
-        typescript({
-          tsconfig: './tsconfig.json',
-          declaration: true,
-          declarationDir: 'dist',
-          declarationMap: isDev,
-          sourceMap: isDev,
-          rootDir: 'src',
-          exclude: ['**/*.test.ts', '**/__test__/**/*'],
-        }),
-      ],
+      plugins: plugins.esm,
       external,
     },
     // CommonJS build
     {
       input: 'src/index.ts',
       output: {
-        file: 'dist/index.js',
+        file: 'dist/index.cjs',
         format: 'cjs',
-        sourcemap: isDev,
+        inlineDynamicImports: true,
+        sourcemap: true,
       },
-      plugins: [
-        typescript({
-          tsconfig: './tsconfig.json',
-          declaration: false,
-          declarationMap: false,
-          sourceMap: isDev,
-          exclude: ['**/*.test.ts', '**/__test__/**/*'],
-        }),
-      ],
+      plugins: plugins.commonJs,
       external,
     },
   ]
