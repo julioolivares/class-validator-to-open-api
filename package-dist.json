@@ -6,7 +6,6 @@
   "module": "./dist/index.esm.js",
   "types": "./dist/index.d.ts",
   "typings": "./dist/index.d.ts",
-  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -14,11 +13,7 @@
       "require": "./dist/index.js"
     }
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "test": "npm run build:test && node --test dist/**/*.test.js",
     "test:watch": "npm run build:test && node --test --watch dist/**/*.test.js",
@@ -79,6 +74,5 @@
     "prettier": "3.6.2",
     "rollup": "4.46.2",
     "tslib": "2.8.1"
-  },
-  "package": "./package-dist.json"
+  }
 }

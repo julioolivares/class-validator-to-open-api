@@ -1,11 +1,11 @@
 import typescript from '@rollup/plugin-typescript'
-import { nodeResolve } from '@rollup/plugin-node-resolve'
 import { glob } from 'glob'
 
 const isDev = process.env.ROLLUP_WATCH === 'true'
 const isTest = process.env.BUILD_TARGET === 'test'
 
 let config
+const external = ['typescript', 'class-validator', 'path']
 
 if (isTest) {
   // Test build configuration
@@ -15,11 +15,10 @@ if (isTest) {
     input: file,
     output: {
       file: file.replace('src/', 'dist/').replace('.ts', '.js'),
-      format: 'es',
+      format: 'esm',
       sourcemap: true,
     },
     plugins: [
-      nodeResolve(),
       typescript({
         tsconfig: './tsconfig.json',
         declaration: false,
@@ -36,11 +35,10 @@ if (isTest) {
       input: 'src/index.ts',
       output: {
         file: 'dist/index.esm.js',
-        format: 'es',
+        format: 'esm',
         sourcemap: isDev,
       },
       plugins: [
-        nodeResolve(),
         typescript({
           tsconfig: './tsconfig.json',
           declaration: true,
@@ -51,7 +49,7 @@ if (isTest) {
           exclude: ['**/*.test.ts', '**/__test__/**/*'],
         }),
       ],
-      external: ['typescript', 'class-validator'],
+      external,
     },
     // CommonJS build
     {
@@ -62,7 +60,6 @@ if (isTest) {
         sourcemap: isDev,
       },
       plugins: [
-        nodeResolve(),
         typescript({
           tsconfig: './tsconfig.json',
           declaration: false,
@@ -71,7 +68,7 @@ if (isTest) {
           exclude: ['**/*.test.ts', '**/__test__/**/*'],
         }),
       ],
-      external: ['typescript', 'class-validator'],
+      external,
     },
   ]
 }
