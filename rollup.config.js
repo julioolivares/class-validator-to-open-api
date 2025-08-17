@@ -7,8 +7,8 @@ const isTest = process.env.BUILD_TARGET === 'test'
 let config
 const external = ['typescript', 'class-validator', 'path']
 const plugins = {
-  commonJs: [typescript()],
-  esm: [typescript()],
+  commonJs: [typescript({ rootDir: 'src', outDir: 'dist' })],
+  esm: [typescript({ rootDir: 'src', outDir: 'dist' })],
 }
 
 if (isTest) {
@@ -44,7 +44,7 @@ if (isTest) {
     {
       input: 'src/index.ts',
       output: {
-        file: 'dist/index.cjs',
+        file: 'dist/index.js',
         format: 'cjs',
         inlineDynamicImports: true,
         sourcemap: true,
