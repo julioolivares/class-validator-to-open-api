@@ -34,7 +34,7 @@ if (isTest) {
       output: {
         file: 'dist/index.esm.js',
         format: 'esm',
-        sourcemap: true,
+        sourcemap: isDev,
         inlineDynamicImports: true,
       },
       plugins: plugins.esm,
@@ -47,7 +47,20 @@ if (isTest) {
         file: 'dist/index.js',
         format: 'cjs',
         inlineDynamicImports: true,
-        sourcemap: true,
+        sourcemap: isDev,
+      },
+      plugins: plugins.commonJs,
+      external,
+    },
+
+    // Run build
+    {
+      input: 'src/run.ts',
+      output: {
+        file: 'dist/run.js',
+        format: 'cjs',
+        inlineDynamicImports: true,
+        sourcemap: isDev,
       },
       plugins: plugins.commonJs,
       external,

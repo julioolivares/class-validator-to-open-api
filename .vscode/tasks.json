@@ -2,22 +2,29 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "type": "typescript",
-      "tsconfig": "tsconfig.json",
-      "option": "watch",
-      "problemMatcher": ["$tsc-watch"],
+      "label": "build:watch",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build:watch"],
       "group": "build",
-      "label": "tsc: watch"
-    },
-    {
-      "type": "typescript",
-      "tsconfig": "tsconfig.json",
-      "problemMatcher": ["$tsc"],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "label": "tsc: build"
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "rollup",
+        "fileLocation": "relative",
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(error|warning)\\s*(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^rollup v.*$|^bundles.*$",
+          "endsPattern": "^\\[.*\\] waiting for changes\\.\\.\\.$"
+        }
+      }
     }
   ]
 }

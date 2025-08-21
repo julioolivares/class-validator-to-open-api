@@ -2,18 +2,15 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "node",
+      "type": "node-terminal",
       "request": "launch",
-      "name": "Debug TS",
+      "name": "Dev",
+      "preLaunchTask": "build:watch",
+      "command": "npm run dev",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/dist/examples/parser.js",
-      "preLaunchTask": "tsc: watch",
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "sourceMaps": true,
-      "console": "integratedTerminal",
-      "restart": true,
-      "runtimeExecutable": "nodemon",
-      "runtimeArgs": ["--config", "nodemon.json"]
+      "internalConsoleOptions": "openOnSessionStart"
     }
   ]
 }
