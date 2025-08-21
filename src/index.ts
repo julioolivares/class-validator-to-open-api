@@ -88,19 +88,19 @@ class SchemaTransformer {
     className: string,
     filePath?: string
   ): { name: string; schema: SchemaType } {
-    if (this.classCache.has(className)) {
-      return this.classCache.get(className)
-    }
-
     const sourceFiles = filePath
       ? [this.program.getSourceFile(filePath)].filter(Boolean)
       : this.program.getSourceFiles().filter(sf => !sf.isDeclarationFile)
 
     for (const sourceFile of sourceFiles) {
       const classNode = this.findClassByName(sourceFile!, className)
-      if (classNode) {
+      if (classNode && sourceFile?.fileName) {
+        if (this.classCache.get(sourceFile.fileName)) {
+          return this.classCache.get(sourceFile.fileName)
+        }
+
         const result = this.transformClass(classNode)
-        this.classCache.set(className, result)
+        this.classCache.set(sourceFile.fileName, result)
         return result
       }
     }
@@ -393,6 +393,8 @@ class SchemaTransformer {
       }
     }
 
+    if (type.toLocaleLowerCase().includes('uploadfile')) type = 'UploadFile'
+
     // Handle primitives
     switch (type.toLowerCase()) {
       case constants.jsPrimitives.String.type.toLowerCase():
@@ -579,6 +581,9 @@ class SchemaTransformer {
  *
  * @public
  */
-export function transform(cls: Function): { name: string; schema: SchemaType } {
+export function transform<T>(cls: new (...args: any[]) => T): {
+  name: string
+  schema: SchemaType
+} {
   return SchemaTransformer.getInstance().transform(cls)
 }
