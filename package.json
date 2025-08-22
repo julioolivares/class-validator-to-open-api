@@ -19,7 +19,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "npm run build:test && node --test dist/**/*.test.js",
+    "test": "npm run build:test && node --test dist/test.js",
     "test:watch": "npm run build:test && node --test --watch dist/**/*.test.js",
     "test:coverage": "npm run build:test && node --test --experimental-test-coverage dist/**/*.test.js",
     "build": "rm -rf dist && rollup -c",

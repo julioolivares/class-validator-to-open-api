@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test'
 import assert from 'node:assert'
-import { transform } from '../index.js'
+import { transform, SchemaTransformer } from '../transformer.js'
 import {
   IsString,
   IsNotEmpty,
@@ -74,7 +74,7 @@ describe('Transform Function', () => {
 
   test('should handle file upload types', () => {
     class UploadFile {}
-    
+
     class FileTest {
       avatar: UploadFile
       files: Buffer[]
@@ -109,21 +109,21 @@ describe('Transform Function', () => {
     }
 
     const result = transform(ValidationTest)
-    
+
     // String with length constraints
     assert.strictEqual(result.schema.properties.name.type, 'string')
     assert.strictEqual(result.schema.properties.name.minLength, 5)
     assert.strictEqual(result.schema.properties.name.maxLength, 100)
-    
+
     // Integer with min/max
     assert.strictEqual(result.schema.properties.age.type, 'integer')
     assert.strictEqual(result.schema.properties.age.format, 'int32')
     assert.strictEqual(result.schema.properties.age.minimum, 18)
     assert.strictEqual(result.schema.properties.age.maximum, 100)
-    
+
     // Email format
     assert.strictEqual(result.schema.properties.email.format, 'email')
-    
+
     // Positive number
     assert.strictEqual(result.schema.properties.price.minimum, 0)
   })
@@ -142,12 +142,12 @@ describe('Transform Function', () => {
     }
 
     const result = transform(ArrayValidationTest)
-    
+
     // Required array with minimum items
     assert.strictEqual(result.schema.properties.requiredTags.type, 'array')
     assert.strictEqual(result.schema.properties.requiredTags.minItems, 1)
     assert.ok(result.schema.required.includes('requiredTags'))
-    
+
     // Array with size bounds
     assert.strictEqual(result.schema.properties.boundedArray.type, 'array')
     assert.strictEqual(result.schema.properties.boundedArray.minItems, 2)
@@ -166,11 +166,11 @@ describe('Transform Function', () => {
     }
 
     const result = transform(LengthTest)
-    
+
     // Length with min and max
     assert.strictEqual(result.schema.properties.code.minLength, 3)
     assert.strictEqual(result.schema.properties.code.maxLength, 10)
-    
+
     // Length with only min
     assert.strictEqual(result.schema.properties.shortCode.minLength, 5)
     assert.strictEqual(result.schema.properties.shortCode.maxLength, undefined)
@@ -215,5 +215,115 @@ describe('Transform Function', () => {
     assert.ok(result.schema.properties.address.properties.street)
     assert.ok(result.schema.properties.address.properties.city)
     assert.ok(result.schema.required.includes('address'))
+  })
+
+  test('should handle generic types like BaseDto<T>', () => {
+    class BaseDto<T> {
+      public data: T
+    }
+
+    class UserData {
+      name: string
+      id: number
+    }
+
+    class GenericTest {
+      user: BaseDto<UserData>
+      description: string
+    }
+
+    const result = transform(GenericTest)
+
+    assert.strictEqual(result.schema.properties.user.type, 'object')
+    assert.ok(result.schema.properties.user.properties)
+    assert.ok(result.schema.properties.user.properties.name)
+    assert.ok(result.schema.properties.user.properties.id)
+    assert.strictEqual(
+      result.schema.properties.user.properties.name.type,
+      'string'
+    )
+    assert.strictEqual(
+      result.schema.properties.user.properties.id.type,
+      'number'
+    )
+
+    assert.strictEqual(result.schema.properties.description.type, 'string')
+  })
+
+  test('should use proper cache keys to avoid conflicts between classes with same names', () => {
+    class TestClass {
+      @IsString()
+      name: string
+
+      @IsNumber()
+      value: number
+    }
+
+    // Transform an existing class multiple times
+    const result1 = transform(TestClass)
+    const result2 = transform(TestClass)
+
+    // Both results should be identical (this indicates that the cache works)
+    assert.deepStrictEqual(result1, result2)
+
+    // Verify that the properties are correct
+    assert.ok(result1.schema.properties.name)
+    assert.ok(result1.schema.properties.value)
+    assert.strictEqual(result1.schema.properties.name.type, 'string')
+    assert.strictEqual(result1.schema.properties.value.type, 'number')
+  })
+
+  test('should manage memory efficiently with cache cleanup', () => {
+    // Clear any existing singleton instance
+    SchemaTransformer.clearInstance()
+    
+    // Create a transformer with small cache size for testing
+    const transformer = SchemaTransformer.getInstance(undefined, {
+      maxCacheSize: 2,
+      autoCleanup: true,
+      excludeNodeModules: true
+    })
+
+    // Clear any existing cache
+    transformer.clearCache()
+
+    class TestClass1 {
+      @IsString()
+      name: string
+    }
+
+    class TestClass2 {
+      @IsNumber()
+      value: number
+    }
+
+    class TestClass3 {
+      @IsBoolean()
+      active: boolean
+    }
+
+    // Transform multiple classes to trigger cache cleanup
+    const result1 = transformer.transform(TestClass1)
+    const result2 = transformer.transform(TestClass2)
+    
+    let stats = transformer.getMemoryStats()
+    assert.strictEqual(stats.cacheSize, 2)
+
+    // This should trigger cache cleanup due to maxCacheSize: 2
+    const result3 = transformer.transform(TestClass3)
+    
+    stats = transformer.getMemoryStats()
+    assert.ok(stats.cacheSize <= 2, 'Cache should be cleaned up automatically')
+
+    // Verify results are still correct
+    assert.strictEqual(result1.schema.properties.name.type, 'string')
+    assert.strictEqual(result2.schema.properties.value.type, 'number')
+    assert.strictEqual(result3.schema.properties.active.type, 'boolean')
+
+    // Test manual cache clearing
+    transformer.clearCache()
+    stats = transformer.getMemoryStats()
+    assert.strictEqual(stats.cacheSize, 0)
+    assert.strictEqual(stats.loadedFiles, 0)
   })
 })

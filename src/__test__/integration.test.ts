@@ -1,10 +1,10 @@
 import { test, describe } from 'node:test'
 import assert from 'node:assert'
-import { transform } from '../index.js'
-import { SimpleUser } from './test-entities/simple.entity.js'
-import { ArrayEntity } from './test-entities/array.entity.js'
-import { CompleteEntity } from './test-entities/complete.entity.js'
-import { BrokenEntity } from './test-entities/broken.entity.js'
+import { transform } from '../transformer.js'
+import { SimpleUser } from './entities/simple.entity.js'
+import { ArrayEntity } from './entities/array.entity.js'
+import { CompleteEntity } from './entities/complete.entity.js'
+import { BrokenEntity } from './entities/broken.entity.js'
 
 describe('Transform Function Integration Tests', () => {
   test('should transform SimpleUser class correctly', () => {
@@ -155,7 +155,7 @@ describe('Transform Function Integration Tests', () => {
       'Address should have city property'
     )
     assert.strictEqual(addressSchema.properties.city.type, 'string')
-    
+
     // Note: Some properties might not be detected due to TypeScript compilation
     // This is a known limitation of the current implementation
     if (addressSchema.properties.country) {
@@ -164,13 +164,13 @@ describe('Transform Function Integration Tests', () => {
         assert.strictEqual(addressSchema.properties.country.minLength, 2)
       }
     }
-    
+
     assert.ok(addressSchema.required, 'Address should have required array')
     assert.ok(
       addressSchema.required.includes('street'),
       'Street should be required'
     )
-    
+
     // City might not be required in all cases
     if (addressSchema.required.includes('city')) {
       assert.ok(true, 'City is required')
@@ -178,11 +178,7 @@ describe('Transform Function Integration Tests', () => {
 
     // Partial reference - this should actually fail for complex types
     assert.strictEqual(result.schema.properties.profile.type, 'object')
-    // BUG: Partial<CompleteEntity> might incorrectly expand nested properties
-    console.log(
-      'Profile schema:',
-      JSON.stringify(result.schema.properties.profile, null, 2)
-    )
+
     // This might fail - Partial types shouldn't expand nested schemas
     assert.strictEqual(
       result.schema.properties.profile.properties,

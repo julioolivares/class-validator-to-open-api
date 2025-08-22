@@ -5,26 +5,33 @@ const isDev = process.env.ROLLUP_WATCH === 'true'
 const isTest = process.env.BUILD_TARGET === 'test'
 
 let config
-const external = ['typescript', 'class-validator', 'path']
+const external = [
+  'typescript',
+  'class-validator',
+  'path',
+  'node:test',
+  'node:assert',
+]
 const plugins = {
   commonJs: [typescript({ rootDir: 'src', outDir: 'dist' })],
   esm: [typescript({ rootDir: 'src', outDir: 'dist' })],
 }
 
 if (isTest) {
-  // Test build configuration
-  const testFiles = glob.sync('src/**/*.test.ts')
-
-  config = testFiles.map(file => ({
-    input: file,
-    output: {
-      file: file.replace('src/', 'dist/').replace('.ts', '.js'),
-      format: 'esm',
-      sourcemap: true,
+  config = [
+    // CommonJS build
+    {
+      input: 'src/__test__/index.ts',
+      output: {
+        file: 'dist/test.js',
+        format: 'cjs',
+        inlineDynamicImports: true,
+        sourcemap: true,
+      },
+      plugins: plugins.commonJs,
+      external,
     },
-    plugins: plugins.esm,
-    external: ['node:test', 'node:assert', 'typescript', 'class-validator'],
-  }))
+  ]
 } else {
   // Production build configuration
   config = [

@@ -20,7 +20,7 @@ import {
 } from 'class-validator'
 
 export class TestEntity {
-  // Primitivos básicos
+  // Basic primitives
   @IsString()
   @IsNotEmpty()
   name: string
@@ -38,7 +38,7 @@ export class TestEntity {
   @IsOptional()
   isActive?: boolean
 
-  // Validaciones de string
+  // String validations
   @IsEmail()
   email: string
 
@@ -51,7 +51,7 @@ export class TestEntity {
   @MaxLength(50)
   description: string
 
-  // Fechas
+  // Dates
   @IsDate()
   createdAt: Date
 
@@ -66,7 +66,7 @@ export class TestEntity {
   @IsInt({ each: true })
   numbers: number[]
 
-  // Tipos especiales
+  // Special types
   avatar: Buffer
 
   files: Uint8Array[]
