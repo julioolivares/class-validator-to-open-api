@@ -1,42 +1,122 @@
 # 🔄 class-validator-to-open-api
 
-✨ Transform TypeScript classes with class-validator decorators into OpenAPI schema objects.
+✨ **Transform TypeScript classes with class-validator decorators into OpenAPI 3.1.0 schema objects**
 
-## 🎯 Why Use This?
+A simple yet powerful library that automatically converts your `class-validator` validated DTOs and entities into OpenAPI-compatible schemas, with zero runtime dependencies.
+
+## 🚀 Key Features
+
+- ✅ **CommonJS & ESM Compatible** - Works in any Node.js project
+- ✅ **Zero Runtime Dependencies** - No `reflect-metadata` or `emitDecoratorMetadata` required
+- ✅ **OpenAPI 3.1.0** - Industry-standard schema generation
+- ✅ **TypeScript Native** - Full type support and safety
+- ✅ **High Performance** - Singleton pattern with built-in caching
+- ✅ **Nested Objects** - Handles complex relationships automatically
+- ✅ **Typed Arrays** - Full support for arrays with validation
+- ✅ **File Uploads** - Binary file upload support
+
+## 🎯 Why Use This Library?
 
 Perfect for projects where you need to:
 
-- 🚀 **API Development**: Generate OpenAPI schemas from your existing validation classes
-- 🧪 **Mock APIs**: Create realistic API documentation and mock servers
-- 📚 **Documentation**: Auto-generate API docs from your TypeScript models
-- 🔧 **Production Ready**: Maintain consistency between validation and API contracts
-- ⚡ **No Runtime Dependencies**: Works without `reflect-metadata` or `emitDecoratorMetadata`
+- � **REST APIs**: Generate Swagger documentation from your existing DTOs
+- 📚 **Auto Documentation**: Maintain consistency between validation and API contracts
+- 🧪 **API Testing**: Create mock data structures for testing
+- 🔧 **Microservices**: Ensure schema consistency across services
+- ⚡ **Legacy Projects**: Works without enabling `emitDecoratorMetadata`
 
 ### 📋 About OpenAPI
 
-**OpenAPI** (formerly known as Swagger) is a specification for describing REST APIs. It's the industry standard that allows developers to document their APIs in a structured, machine-readable format.
+**OpenAPI** (formerly Swagger) is the industry standard specification for describing REST APIs in a structured, machine-readable format. This library generates **OpenAPI 3.1.0** compatible schemas from your TypeScript classes.
 
-- **Current Version**: OpenAPI 3.1.0 ([Official Specification](https://spec.openapis.org/oas/v3.1.0))
-- **What it does**: Defines the structure, endpoints, request/response formats, and validation rules of your API
-- **Why it matters**: Enables automatic documentation generation, client SDK creation, API testing, and ensures consistency across your API ecosystem
+**Benefits:**
 
-This library generates OpenAPI 3.1.0 compatible schema objects from your TypeScript validation classes, bridging the gap between your code and API documentation.
-
-### 💡 Common Use Cases
-
-- **Express.js APIs**: Generate Swagger documentation from your DTOs
-- **NestJS Projects**: Convert class-validator DTOs to OpenAPI schemas
-- **API Testing**: Create mock data structures for testing
-- **Microservices**: Ensure schema consistency across services
-- **Legacy Projects**: Works with projects that can't enable `emitDecoratorMetadata`
+- Automatic documentation generation
+- Client SDK generation
+- API testing automation
+- Consistency across your API ecosystem
 
 ## 📦 Installation
 
 ```bash
+# Using npm
 npm install class-validator-to-open-api class-validator
+
+# Using yarn
+yarn add class-validator-to-open-api class-validator
+
+# Using pnpm
+pnpm add class-validator-to-open-api class-validator
 ```
 
 > **Note**: `class-validator` is required as a peer dependency for the decorators to work.
+
+## 🔧 Module Compatibility
+
+This library is **100% compatible with both CommonJS and ESM**, allowing you to use it in any modern Node.js project.
+
+### ESM (ES Modules) - Recommended
+
+```typescript
+// ESM import
+import { transform } from 'class-validator-to-open-api'
+import { IsString, IsEmail, IsNotEmpty } from 'class-validator'
+
+class User {
+  @IsString()
+  @IsNotEmpty()
+  name: string
+
+  @IsEmail()
+  email: string
+}
+
+const schema = transform(User)
+console.log(JSON.stringify(schema, null, 2))
+```
+
+### CommonJS
+
+```javascript
+// CommonJS require
+const { transform } = require('class-validator-to-open-api')
+const { IsString, IsEmail, IsNotEmpty } = require('class-validator')
+
+class User {
+  constructor() {
+    this.name = undefined
+    this.email = undefined
+  }
+}
+
+// Apply decorators manually in CommonJS
+IsString()(User.prototype, 'name')
+IsNotEmpty()(User.prototype, 'name')
+IsEmail()(User.prototype, 'email')
+
+const schema = transform(User)
+console.log(JSON.stringify(schema, null, 2))
+```
+
+### TypeScript with CommonJS
+
+```typescript
+// TypeScript with CommonJS configuration
+import { transform } from 'class-validator-to-open-api'
+import { IsString, IsEmail, IsNotEmpty } from 'class-validator'
+
+class User {
+  @IsString()
+  @IsNotEmpty()
+  name: string
+
+  @IsEmail()
+  email: string
+}
+
+const schema = transform(User)
+console.log(JSON.stringify(schema, null, 2))
+```
 
 ## ⚙️ Requirements
 
@@ -50,11 +130,9 @@ npm install class-validator-to-open-api class-validator
   }
   ```
 
-> **Note**: Unlike other solutions, this package does **NOT** require `emitDecoratorMetadata: true` or `reflect-metadata`.
+## 🚀 Quick Start
 
-## 🚀 Usage
-
-### Basic Usage
+### Basic Example
 
 ```typescript
 import { transform } from 'class-validator-to-open-api'
@@ -77,11 +155,10 @@ class User {
 
 // Transform the class to OpenAPI schema
 const result = transform(User)
-
 console.log(JSON.stringify(result, null, 2))
 ```
 
-**Output:**
+**Generated Output:**
 
 ```json
 {
@@ -108,6 +185,64 @@ console.log(JSON.stringify(result, null, 2))
 }
 ```
 
+### Express.js + Swagger UI Example
+
+```typescript
+import express from 'express'
+import swaggerUi from 'swagger-ui-express'
+import { transform } from 'class-validator-to-open-api'
+import { IsString, IsEmail, IsNotEmpty, IsInt, Min, Max } from 'class-validator'
+
+// Define your DTOs with validation decorators
+class User {
+  @IsString()
+  @IsNotEmpty()
+  name: string
+
+  @IsEmail()
+  email: string
+
+  @IsInt()
+  @Min(18)
+  @Max(100)
+  age: number
+}
+
+class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string
+
+  @IsEmail()
+  email: string
+}
+
+const app = express()
+
+// Generate schemas from your classes
+const userSchema = transform(User)
+const createUserSchema = transform(CreateUserDto)
+
+// Create OpenAPI specification
+const swaggerSpec = {
+  openapi: '3.1.0',
+  info: { title: 'My API', version: '1.0.0' },
+  components: {
+    schemas: {
+      [userSchema.name]: userSchema.schema,
+      [createUserSchema.name]: createUserSchema.schema,
+    },
+  },
+}
+
+// Setup Swagger UI at /api-docs
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+
+app.listen(3000, () => {
+  console.log('API docs available at http://localhost:3000/api-docs')
+})
+```
+
 ### File Upload Example
 
 ```typescript
@@ -126,13 +261,12 @@ class ProfileUpload {
   resume: UploadFile
 }
 
-// Generate schema using convenience function
+// Generate schema
 const schema = transform(ProfileUpload)
-
 console.log(JSON.stringify(schema, null, 2))
 ```
 
-**Output:**
+**Generated Output:**
 
 ```json
 {
@@ -154,7 +288,7 @@ console.log(JSON.stringify(schema, null, 2))
 }
 ```
 
-### Complex Example with Nested Objects and Arrays
+### Advanced Example with Nested Objects and Arrays
 
 ```typescript
 import {
@@ -215,7 +349,7 @@ class User {
 const schema = transform(User)
 ```
 
-**Output:**
+**Generated Output:**
 
 ```json
 {
@@ -280,69 +414,77 @@ const schema = transform(User)
 }
 ```
 
-## 🎨 Supported Decorators
+> **Note**: Unlike other solutions, this package does **NOT** require `emitDecoratorMetadata: true` or `reflect-metadata`.
 
-### Type Decorators
+## 🎨 Supported Decorators Reference
 
-| Decorator      | Schema Property                       |
-| -------------- | ------------------------------------- |
-| `@IsString()`  | `type: "string"`                      |
-| `@IsInt()`     | `type: "integer", format: "int32"`    |
-| `@IsNumber()`  | `type: "number", format: "double"`    |
-| `@IsBoolean()` | `type: "boolean"`                     |
-| `@IsEmail()`   | `type: "string", format: "email"`     |
-| `@IsDate()`    | `type: "string", format: "date-time"` |
+### Type Validation Decorators
 
-### Validation Decorators
+| Decorator      | Generated Schema Property             | Description                 |
+| -------------- | ------------------------------------- | --------------------------- |
+| `@IsString()`  | `type: "string"`                      | String type validation      |
+| `@IsInt()`     | `type: "integer", format: "int32"`    | Integer type validation     |
+| `@IsNumber()`  | `type: "number", format: "double"`    | Number type validation      |
+| `@IsBoolean()` | `type: "boolean"`                     | Boolean type validation     |
+| `@IsEmail()`   | `type: "string", format: "email"`     | Email format validation     |
+| `@IsDate()`    | `type: "string", format: "date-time"` | Date-time format validation |
 
-| Decorator           | Schema Property                  |
-| ------------------- | -------------------------------- |
-| `@IsNotEmpty()`     | Adds to `required` array         |
-| `@MinLength(n)`     | `minLength: n`                   |
-| `@MaxLength(n)`     | `maxLength: n`                   |
-| `@Length(min, max)` | `minLength: min, maxLength: max` |
-| `@Min(n)`           | `minimum: n`                     |
-| `@Max(n)`           | `maximum: n`                     |
-| `@IsPositive()`     | `minimum: 0` (≥ 0)               |
+### String Validation Decorators
 
-### Array Decorators
+| Decorator           | Generated Schema Property        | Description           |
+| ------------------- | -------------------------------- | --------------------- |
+| `@IsNotEmpty()`     | Adds to `required` array         | Field is required     |
+| `@MinLength(n)`     | `minLength: n`                   | Minimum string length |
+| `@MaxLength(n)`     | `maxLength: n`                   | Maximum string length |
+| `@Length(min, max)` | `minLength: min, maxLength: max` | String length range   |
 
-| Decorator          | Schema Property          |
-| ------------------ | ------------------------ |
-| `@IsArray()`       | `type: "array"`          |
-| `@ArrayNotEmpty()` | `minItems: 1` + required |
-| `@ArrayMinSize(n)` | `minItems: n`            |
-| `@ArrayMaxSize(n)` | `maxItems: n`            |
+### Number Validation Decorators
 
-### Special Types
+| Decorator       | Generated Schema Property | Description           |
+| --------------- | ------------------------- | --------------------- |
+| `@Min(n)`       | `minimum: n`              | Minimum numeric value |
+| `@Max(n)`       | `maximum: n`              | Maximum numeric value |
+| `@IsPositive()` | `minimum: 0`              | Positive number (≥ 0) |
 
-| TypeScript Type | OpenAPI Schema                        |
-| --------------- | ------------------------------------- |
-| `Date`          | `type: "string", format: "date-time"` |
-| `Buffer`        | `type: "string", format: "binary"`    |
-| `Uint8Array`    | `type: "string", format: "binary"`    |
-| `UploadFile`    | `type: "string", format: "binary"`    |
-| `CustomClass`   | Nested object schema                  |
-| `Type[]`        | Array with typed items                |
+### Array Validation Decorators
 
-### 📁 Custom File Types
+| Decorator          | Generated Schema Property | Description                 |
+| ------------------ | ------------------------- | --------------------------- |
+| `@IsArray()`       | `type: "array"`           | Array type validation       |
+| `@ArrayNotEmpty()` | `minItems: 1` + required  | Non-empty array requirement |
+| `@ArrayMinSize(n)` | `minItems: n`             | Minimum array size          |
+| `@ArrayMaxSize(n)` | `maxItems: n`             | Maximum array size          |
 
-The library supports custom file upload types that are automatically mapped to binary format:
+### Special Type Mappings
+
+| TypeScript Type | Generated OpenAPI Schema              | Description                    |
+| --------------- | ------------------------------------- | ------------------------------ |
+| `Date`          | `type: "string", format: "date-time"` | ISO date-time string           |
+| `Buffer`        | `type: "string", format: "binary"`    | Binary data                    |
+| `Uint8Array`    | `type: "string", format: "binary"`    | Binary array                   |
+| `UploadFile`    | `type: "string", format: "binary"`    | Custom file upload type        |
+| `CustomClass`   | Nested object schema                  | Recursive class transformation |
+| `Type[]`        | Array with typed items                | Array of specific type         |
+
+## 📁 File Upload Support
+
+The library provides built-in support for file uploads with automatic binary format mapping:
 
 ```typescript
 import { transform } from 'class-validator-to-open-api'
-import { IsNotEmpty, IsArray } from 'class-validator'
+import { IsNotEmpty, IsArray, IsOptional } from 'class-validator'
 
 // Define your custom file type
 class UploadFile {}
 
 class DocumentUpload {
   @IsNotEmpty()
-  document: UploadFile // Single file upload
+  document: UploadFile // Single file upload (required)
 
   @IsArray()
   attachments: UploadFile[] // Multiple file uploads
 
+  @IsOptional()
   avatar: UploadFile // Optional file upload
 }
 
@@ -380,21 +522,30 @@ console.log(JSON.stringify(schema, null, 2))
 }
 ```
 
+### Supported File Types
+
+The following types are automatically converted to binary format:
+
+- `Buffer` - Node.js Buffer objects
+- `Uint8Array` - Typed arrays
+- `UploadFile` - Custom file upload classes
+- Any class ending with "File" suffix (e.g., `ImageFile`, `VideoFile`)
+
 ## 📖 API Reference
 
-### ⚡ `transform(cls: Function)`
+### `transform(cls: Function)`
 
-Transforms a class constructor function into an OpenAPI schema object. Uses an internal singleton for optimal performance.
+Transforms a class constructor function into an OpenAPI schema object.
 
 **Parameters:**
 
-- `cls` - The class constructor function to transform
+- `cls: Function` - The class constructor function to transform
 
 **Returns:**
 
 ```typescript
 {
-  name: string;
+  name: string;        // Class name
   schema: {
     type: "object";
     properties: Record<string, any>;
@@ -409,39 +560,65 @@ Transforms a class constructor function into an OpenAPI schema object. Uses an i
 import { transform } from 'class-validator-to-open-api'
 import { User } from './entities/user.js'
 
-const schema = transform(User)
-console.log(JSON.stringify(schema, null, 2))
+const result = transform(User)
+console.log(result.name) // "User"
+console.log(result.schema) // OpenAPI schema object
 ```
 
-## 🚀 Features
+## 🌟 Advanced Features
 
-- ✅ **No Runtime Dependencies**: Uses TypeScript Compiler API instead of reflect-metadata
-- ✅ **Singleton Pattern**: Optimized performance with shared instance and caching
-- ✅ **Nested Objects**: Automatically handles complex object relationships
-- ✅ **Array Support**: Full support for typed arrays with validation
-- ✅ **Built-in Caching**: Avoids reprocessing the same classes
-- ✅ **Type Safety**: Full TypeScript support with proper type definitions
-- ✅ **Flexible**: Works with any TypeScript project configuration
-- ✅ **Comprehensive**: Supports all major class-validator decorators
-- ✅ **Simple API**: Multiple usage patterns for different needs
+- ✅ **Zero Runtime Dependencies** - Uses TypeScript Compiler API instead of reflect-metadata
+- ✅ **High Performance** - Singleton pattern with built-in caching for repeated transformations
+- ✅ **Nested Object Support** - Automatically handles complex object relationships
+- ✅ **Array Type Support** - Full support for typed arrays with validation constraints
+- ✅ **Built-in Caching** - Avoids reprocessing the same classes multiple times
+- ✅ **Type Safety** - Complete TypeScript support with proper type definitions
+- ✅ **Framework Agnostic** - Works with any TypeScript project configuration
+- ✅ **Comprehensive Coverage** - Supports all major class-validator decorators
 
-## 🔧 Migration from reflect-metadata
+## 🔄 Migration Guide
+
+### From reflect-metadata Solutions
 
 If you're migrating from a solution that requires `reflect-metadata`:
 
-1. Remove `reflect-metadata` imports from your entities
-2. Remove `emitDecoratorMetadata: true` from tsconfig.json (optional)
-3. Update your transformation code to use the new API
+**Before (with reflect-metadata):**
 
 ```typescript
-// Before (with reflect-metadata)
 import 'reflect-metadata'
-const schema = transformClass(User)
+import { getMetadataStorage } from 'class-validator'
 
-// After (with this package)
+// Complex setup required
+const schema = transformClassToSchema(User)
+```
+
+**After (with class-validator-to-open-api):**
+
+```typescript
 import { transform } from 'class-validator-to-open-api'
-import { User } from './entities/user.js'
+
+// Simple, clean API
 const schema = transform(User)
+```
+
+### Migration Steps
+
+1. **Remove reflect-metadata imports** from your entities
+2. **Remove `emitDecoratorMetadata: true`** from tsconfig.json (optional)
+3. **Update transformation code** to use the new API
+4. **Remove reflect-metadata dependency** from package.json
+
+### TypeScript Configuration
+
+You only need minimal TypeScript configuration:
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true
+    // emitDecoratorMetadata: true ← NOT REQUIRED!
+  }
+}
 ```
 
 ## 🔧 Troubleshooting
