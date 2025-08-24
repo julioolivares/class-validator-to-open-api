@@ -1,7 +1,7 @@
 {
-  "name": "class-validator-to-open-api",
+  "name": "ts-class-to-openapi",
   "version": "1.0.15",
-  "description": "Transform TypeScript classes with class-validator decorators into OpenAPI schema objects",
+  "description": "Transform TypeScript classes (with or without class-validator decorators) into OpenAPI 3.1.0 schema objects",
   "main": "./dist/index.js",
   "module": "./dist/index.esm.js",
   "types": "./dist/index.d.ts",
@@ -28,10 +28,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/julioolivares/class-validator-to-open-api.git"
+    "url": "git+https://github.com/julioolivares/ts-class-to-openapi.git"
   },
   "keywords": [
-    "class-validator-to-open-api",
+    "ts-class-to-openapi",
+    "typescript-to-openapi",
     "class-validator",
     "openapi",
     "swagger",
@@ -49,9 +50,9 @@
     "documentation"
   ],
   "author": "Julio Olivares",
-  "homepage": "https://github.com/julioolivares/class-validator-to-open-api#readme",
+  "homepage": "https://github.com/julioolivares/ts-class-to-openapi#readme",
   "bugs": {
-    "url": "https://github.com/julioolivares/class-validator-to-open-api/issues"
+    "url": "https://github.com/julioolivares/ts-class-to-openapi/issues"
   },
   "license": "MIT",
   "engines": {
@@ -61,6 +62,11 @@
   "engineStrict": true,
   "peerDependencies": {
     "class-validator": "0.14.0"
+  },
+  "peerDependenciesMeta": {
+    "class-validator": {
+      "optional": true
+    }
   },
   "dependencies": {
     "typescript": "5.0.2"

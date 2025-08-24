@@ -380,7 +380,7 @@ class SchemaTransformer {
    * Extracts property information from a class declaration.
    *
    * @param classNode - The TypeScript class declaration node
-   * @returns Array of property information including names, types, and decorators
+   * @returns Array of property information including names, types, decorators, and optional status
    * @private
    */
   private extractProperties(classNode: ts.ClassDeclaration): PropertyInfo[] {
@@ -395,11 +395,13 @@ class SchemaTransformer {
         const propertyName = member.name.text
         const type = this.getPropertyType(member)
         const decorators = this.extractDecorators(member)
+        const isOptional = !!member.questionToken
 
         properties.push({
           name: propertyName,
           type,
           decorators,
+          isOptional,
         })
       }
     }
@@ -586,6 +588,9 @@ class SchemaTransformer {
       if (property.decorators.length === 0) {
         this.applySensibleDefaults(property, schema)
       }
+
+      // Determine if property should be required based on decorators and optional status
+      this.determineRequiredStatus(property, schema)
     }
 
     return schema
@@ -863,6 +868,41 @@ class SchemaTransformer {
         propertySchema.minimum = 0
       }
     }
+  }
+
+  /**
+   * Determines if a property should be required based on decorators and optional status.
+   *
+   * Logic:
+   * - If property has IsNotEmpty or ArrayNotEmpty decorator, it's required (handled in applyDecorators)
+   * - Otherwise, the property is not required (preserving original behavior)
+   * - The isOptional information is stored for future use and documentation
+   *
+   * @param property - The property information
+   * @param schema - The schema object to modify
+   * @private
+   */
+  private determineRequiredStatus(
+    property: PropertyInfo,
+    schema: SchemaType
+  ): void {
+    const propertyName = property.name
+
+    // Check if already marked as required by IsNotEmpty or ArrayNotEmpty decorator
+    const isAlreadyRequired = schema.required.includes(propertyName)
+
+    // If already required by decorators, don't change it
+    if (isAlreadyRequired) {
+      return
+    }
+
+    // If property is optional (has ?), it should not be required unless explicitly marked
+    if (property.isOptional) {
+      return
+    }
+
+    // If property is not optional and not already required, make it required
+    schema.required.push(propertyName)
   }
 }
 

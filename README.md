@@ -1,11 +1,15 @@
-# 🔄 class-validator-to-open-api
+# 🔄 ts-class-to-openapi
 
-✨ **Transform TypeScript classes with class-validator decorators into OpenAPI 3.1.0 schema objects**
+✨ **Transform TypeScript classes into OpenAPI 3.1.0 schema objects**
 
-A simple yet powerful library that automatically converts your `class-validator` validated DTOs and entities into OpenAPI-compatible schemas, with zero runtime dependencies.
+A powerful library that automatically converts your TypeScript classes into OpenAPI-compatible schemas. Works with **pure TypeScript classes** and **class-validator decorated classes**, with zero runtime dependencies.
+
+> **🎯 New Feature**: Now supports **pure TypeScript classes** without requiring any decorators or external dependencies! Perfect for transforming existing codebases instantly.
 
 ## 🚀 Key Features
 
+- ✅ **Pure TypeScript Support** - Transform any TypeScript class without decorators
+- ✅ **class-validator Compatible** - Enhanced schemas with validation decorators
 - ✅ **CommonJS & ESM Compatible** - Works in any Node.js project
 - ✅ **Zero Runtime Dependencies** - No `reflect-metadata` or `emitDecoratorMetadata` required
 - ✅ **OpenAPI 3.1.0** - Industry-standard schema generation
@@ -19,11 +23,13 @@ A simple yet powerful library that automatically converts your `class-validator`
 
 Perfect for projects where you need to:
 
-- � **REST APIs**: Generate Swagger documentation from your existing DTOs
-- 📚 **Auto Documentation**: Maintain consistency between validation and API contracts
+- 🌐 **REST APIs**: Generate Swagger documentation from your existing TypeScript classes
+- 📚 **Auto Documentation**: Maintain consistency between TypeScript types and API contracts
 - 🧪 **API Testing**: Create mock data structures for testing
 - 🔧 **Microservices**: Ensure schema consistency across services
 - ⚡ **Legacy Projects**: Works without enabling `emitDecoratorMetadata`
+- 🎯 **Pure TypeScript**: Transform classes without any decorators
+- 🔍 **Enhanced Validation**: Add class-validator decorators for richer schemas
 
 ### 📋 About OpenAPI
 
@@ -40,16 +46,31 @@ Perfect for projects where you need to:
 
 ```bash
 # Using npm
-npm install class-validator-to-open-api class-validator
+npm install ts-class-to-openapi
 
 # Using yarn
-yarn add class-validator-to-open-api class-validator
+yarn add ts-class-to-openapi
 
 # Using pnpm
-pnpm add class-validator-to-open-api class-validator
+pnpm add ts-class-to-openapi
 ```
 
-> **Note**: `class-validator` is required as a peer dependency for the decorators to work.
+### For class-validator Enhanced Features
+
+If you want to use class-validator decorators for enhanced validation schemas:
+
+```bash
+# Using npm
+npm install ts-class-to-openapi class-validator
+
+# Using yarn
+yarn add ts-class-to-openapi class-validator
+
+# Using pnpm
+pnpm add ts-class-to-openapi class-validator
+```
+
+> **Note**: `class-validator` is only required if you want to use validation decorators. Pure TypeScript classes work without it.
 
 ## 🔧 Module Compatibility
 
@@ -59,7 +80,7 @@ This library is **100% compatible with both CommonJS and ESM**, allowing you to 
 
 ```typescript
 // ESM import
-import { transform } from 'class-validator-to-open-api'
+import { transform } from 'ts-class-to-openapi'
 import { IsString, IsEmail, IsNotEmpty } from 'class-validator'
 
 class User {
@@ -75,34 +96,11 @@ const schema = transform(User)
 console.log(JSON.stringify(schema, null, 2))
 ```
 
-### CommonJS
-
-```javascript
-// CommonJS require
-const { transform } = require('class-validator-to-open-api')
-const { IsString, IsEmail, IsNotEmpty } = require('class-validator')
-
-class User {
-  constructor() {
-    this.name = undefined
-    this.email = undefined
-  }
-}
-
-// Apply decorators manually in CommonJS
-IsString()(User.prototype, 'name')
-IsNotEmpty()(User.prototype, 'name')
-IsEmail()(User.prototype, 'email')
-
-const schema = transform(User)
-console.log(JSON.stringify(schema, null, 2))
-```
-
 ### TypeScript with CommonJS
 
 ```typescript
 // TypeScript with CommonJS configuration
-import { transform } from 'class-validator-to-open-api'
+import { transform } from 'ts-class-to-openapi'
 import { IsString, IsEmail, IsNotEmpty } from 'class-validator'
 
 class User {
@@ -130,12 +128,153 @@ console.log(JSON.stringify(schema, null, 2))
   }
   ```
 
-## 🚀 Quick Start
+> **Note**: The `experimentalDecorators` option is only required if you plan to use class-validator decorators. Pure TypeScript classes work without any special configuration.
 
-### Basic Example
+## 🎨 Two Transformation Modes
+
+### 1. Pure TypeScript Classes
+
+Transform any TypeScript class without requiring any decorators or external dependencies:
 
 ```typescript
-import { transform } from 'class-validator-to-open-api'
+import { transform } from 'ts-class-to-openapi'
+
+// Pure TypeScript - no decorators needed
+class Product {
+  id: number
+  name: string
+  price: number
+  inStock: boolean
+  categories: string[]
+  metadata: Record<string, any>
+  createdAt: Date
+}
+
+const schema = transform(Product)
+```
+
+**Benefits:**
+
+- ✅ No external dependencies required
+- ✅ Works with existing TypeScript codebases
+- ✅ Zero configuration needed
+- ✅ Automatic type inference
+- ✅ Perfect for legacy projects
+
+### 2. Enhanced with class-validator
+
+Add validation decorators for richer, more detailed schemas:
+
+```typescript
+import { transform } from 'ts-class-to-openapi'
+import {
+  IsString,
+  IsNumber,
+  IsPositive,
+  IsArray,
+  IsNotEmpty,
+} from 'class-validator'
+
+// Enhanced with validation decorators
+class Product {
+  @IsNumber()
+  @IsPositive()
+  id: number
+
+  @IsString()
+  @IsNotEmpty()
+  name: string
+
+  @IsNumber()
+  @IsPositive()
+  price: number
+
+  @IsArray()
+  categories: string[]
+}
+
+const schema = transform(Product)
+```
+
+**Benefits:**
+
+- ✅ Rich validation constraints
+- ✅ Required field specification
+- ✅ Format validation (email, date, etc.)
+- ✅ String length constraints
+- ✅ Number range validation
+- ✅ Array size validation
+
+## 🚀 Quick Start
+
+### Pure TypeScript Classes
+
+Transform any TypeScript class without requiring decorators:
+
+```typescript
+import { transform } from 'ts-class-to-openapi'
+
+// Pure TypeScript class - no decorators needed!
+class User {
+  id: number
+  name: string
+  email: string
+  age: number
+  isActive: boolean
+  tags: string[]
+  createdAt: Date
+}
+
+// Transform the class to OpenAPI schema
+const result = transform(User)
+console.log(JSON.stringify(result, null, 2))
+```
+
+**Generated Output:**
+
+```json
+{
+  "name": "User",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "number"
+      },
+      "name": {
+        "type": "string"
+      },
+      "email": {
+        "type": "string"
+      },
+      "age": {
+        "type": "number"
+      },
+      "isActive": {
+        "type": "boolean"
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "createdAt": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "required": []
+  }
+}
+```
+
+### Enhanced with class-validator Decorators
+
+For more detailed validation schemas, add class-validator decorators:
+
+```typescript
+import { transform } from 'ts-class-to-openapi'
 import { IsString, IsEmail, IsNotEmpty, IsInt, Min, Max } from 'class-validator'
 
 // Define your class with validation decorators
@@ -190,7 +329,7 @@ console.log(JSON.stringify(result, null, 2))
 ```typescript
 import express from 'express'
 import swaggerUi from 'swagger-ui-express'
-import { transform } from 'class-validator-to-open-api'
+import { transform } from 'ts-class-to-openapi'
 import { IsString, IsEmail, IsNotEmpty, IsInt, Min, Max } from 'class-validator'
 
 // Define your DTOs with validation decorators
@@ -246,7 +385,7 @@ app.listen(3000, () => {
 ### File Upload Example
 
 ```typescript
-import { transform } from 'class-validator-to-open-api'
+import { transform } from 'ts-class-to-openapi'
 import { IsNotEmpty, IsOptional } from 'class-validator'
 
 // Define custom file type
@@ -289,6 +428,42 @@ console.log(JSON.stringify(schema, null, 2))
 ```
 
 ### Advanced Example with Nested Objects and Arrays
+
+#### Pure TypeScript Classes
+
+```typescript
+import { transform } from 'ts-class-to-openapi'
+
+class Role {
+  id: number
+  name: string
+  permissions: string[]
+}
+
+class Address {
+  street: string
+  city: string
+  country: string
+  zipCode: string
+}
+
+class User {
+  id: number
+  name: string
+  email: string
+  age: number
+  isActive: boolean
+  tags: string[]
+  createdAt: Date
+  role: Role // Nested object
+  addresses: Address[] // Array of objects
+  files: Buffer[] // Binary files
+}
+
+const schema = transform(User)
+```
+
+#### Enhanced with class-validator
 
 ```typescript
 import {
@@ -416,6 +591,53 @@ const schema = transform(User)
 
 > **Note**: Unlike other solutions, this package does **NOT** require `emitDecoratorMetadata: true` or `reflect-metadata`.
 
+## 📊 Pure TypeScript vs Enhanced Mode Comparison
+
+| Feature                | Pure TypeScript                       | Enhanced (class-validator)           |
+| ---------------------- | ------------------------------------- | ------------------------------------ |
+| **Dependencies**       | Zero                                  | Requires `class-validator`           |
+| **Configuration**      | None                                  | `experimentalDecorators: true`       |
+| **Type Detection**     | Automatic                             | Automatic + Decorators               |
+| **Validation Rules**   | Basic types only                      | Rich validation constraints          |
+| **Required Fields**    | None (all optional)                   | Specified by decorators              |
+| **String Constraints** | None                                  | Min/max length, patterns             |
+| **Number Constraints** | None                                  | Min/max values, positive             |
+| **Array Constraints**  | None                                  | Min/max items, non-empty             |
+| **Email Validation**   | None                                  | Email format validation              |
+| **Date Handling**      | `date-time` format                    | `date-time` format                   |
+| **Use Case**           | Existing codebases, rapid prototyping | APIs with validation, robust schemas |
+
+### Example Comparison
+
+**Pure TypeScript Class:**
+
+```typescript
+class User {
+  name: string
+  email: string
+  age: number
+}
+// Generates: All properties optional, basic types
+```
+
+**Enhanced Class:**
+
+```typescript
+class User {
+  @IsString()
+  @IsNotEmpty()
+  name: string
+
+  @IsEmail()
+  email: string
+
+  @IsInt()
+  @Min(18)
+  age: number
+}
+// Generates: name required, email format validation, age minimum 18
+```
+
 ## 🎨 Supported Decorators Reference
 
 ### Type Validation Decorators
@@ -466,12 +688,40 @@ const schema = transform(User)
 | `CustomClass`   | Nested object schema                  | Recursive class transformation |
 | `Type[]`        | Array with typed items                | Array of specific type         |
 
+### Automatic TypeScript Type Detection
+
+The library automatically detects and converts TypeScript types:
+
+```typescript
+class AutoDetectionExample {
+  // Primitives
+  id: number // → type: "number"
+  name: string // → type: "string"
+  isActive: boolean // → type: "boolean"
+
+  // Special types
+  createdAt: Date // → type: "string", format: "date-time"
+  file: Buffer // → type: "string", format: "binary"
+
+  // Arrays
+  tags: string[] // → type: "array", items: { type: "string" }
+  scores: number[] // → type: "array", items: { type: "number" }
+
+  // Objects
+  metadata: object // → type: "object"
+  data: any // → No schema constraints
+
+  // Nested classes (automatically transformed)
+  profile: UserProfile // → Nested object schema
+}
+```
+
 ## 📁 File Upload Support
 
 The library provides built-in support for file uploads with automatic binary format mapping:
 
 ```typescript
-import { transform } from 'class-validator-to-open-api'
+import { transform } from 'ts-class-to-openapi'
 import { IsNotEmpty, IsArray, IsOptional } from 'class-validator'
 
 // Define your custom file type
@@ -557,7 +807,7 @@ Transforms a class constructor function into an OpenAPI schema object.
 **Example:**
 
 ```typescript
-import { transform } from 'class-validator-to-open-api'
+import { transform } from 'ts-class-to-openapi'
 import { User } from './entities/user.js'
 
 const result = transform(User)
@@ -567,6 +817,7 @@ console.log(result.schema) // OpenAPI schema object
 
 ## 🌟 Advanced Features
 
+- ✅ **Pure TypeScript Support** - Works with any TypeScript class, no decorators required
 - ✅ **Zero Runtime Dependencies** - Uses TypeScript Compiler API instead of reflect-metadata
 - ✅ **High Performance** - Singleton pattern with built-in caching for repeated transformations
 - ✅ **Nested Object Support** - Automatically handles complex object relationships
@@ -575,6 +826,7 @@ console.log(result.schema) // OpenAPI schema object
 - ✅ **Type Safety** - Complete TypeScript support with proper type definitions
 - ✅ **Framework Agnostic** - Works with any TypeScript project configuration
 - ✅ **Comprehensive Coverage** - Supports all major class-validator decorators
+- ✅ **Flexible Usage** - Use with or without validation decorators
 
 ## 🔄 Migration Guide
 
@@ -592,13 +844,43 @@ import { getMetadataStorage } from 'class-validator'
 const schema = transformClassToSchema(User)
 ```
 
-**After (with class-validator-to-open-api):**
+**After (with ts-class-to-openapi):**
 
 ```typescript
-import { transform } from 'class-validator-to-open-api'
+import { transform } from 'ts-class-to-openapi'
 
 // Simple, clean API
 const schema = transform(User)
+```
+
+### New: Pure TypeScript Support
+
+The biggest advantage is that you can now transform **any TypeScript class** without requiring decorators:
+
+**Before (required decorators):**
+
+```typescript
+// This would NOT work with traditional solutions
+class LegacyUser {
+  id: number
+  name: string
+  email: string
+}
+```
+
+**Now (works immediately):**
+
+```typescript
+import { transform } from 'ts-class-to-openapi'
+
+// This works out of the box!
+class LegacyUser {
+  id: number
+  name: string
+  email: string
+}
+
+const schema = transform(LegacyUser) // ✅ Works perfectly
 ```
 
 ### Migration Steps
@@ -607,6 +889,7 @@ const schema = transform(User)
 2. **Remove `emitDecoratorMetadata: true`** from tsconfig.json (optional)
 3. **Update transformation code** to use the new API
 4. **Remove reflect-metadata dependency** from package.json
+5. **Optional**: Keep decorators for enhanced validation or remove them entirely
 
 ### TypeScript Configuration
 
@@ -625,7 +908,15 @@ You only need minimal TypeScript configuration:
 
 ### Common Issues
 
+**Error: "Cannot find module 'ts-class-to-openapi'"**
+
+```bash
+npm install ts-class-to-openapi
+```
+
 **Error: "Cannot find module 'class-validator'"**
+
+This is only needed if you want to use validation decorators:
 
 ```bash
 npm install class-validator
@@ -644,9 +935,18 @@ Add to your `tsconfig.json`:
 
 **Empty schema generated**
 
-- Ensure your class has class-validator decorators
+- For pure TypeScript classes: Ensure your class has properly typed properties
+- For class-validator enhanced: Ensure your class has class-validator decorators
 - Check that the class is properly exported/imported
 - Verify TypeScript compilation is working
+
+**Works without decorators but want validation?**
+
+Pure TypeScript classes work immediately, but if you want enhanced validation schemas:
+
+1. Install class-validator: `npm install class-validator`
+2. Add decorators to your properties
+3. Enable `experimentalDecorators: true` in tsconfig.json
 
 **Nested objects not working**
 

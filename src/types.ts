@@ -25,6 +25,8 @@ interface PropertyInfo {
   type: string
   /** Array of decorators applied to this property */
   decorators: DecoratorInfo[]
+  /** Whether the property is optional (has ? operator) */
+  isOptional: boolean
 }
 
 export { type SchemaType, type Property, type DecoratorInfo, type PropertyInfo }

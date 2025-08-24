@@ -183,7 +183,7 @@ describe('Transform Function', () => {
       name: string
 
       @IsString()
-      optionalField: string
+      optionalField?: string // Added ? to make it optional
     }
 
     const result = transform(RequiredTest)
@@ -276,12 +276,12 @@ describe('Transform Function', () => {
   test('should manage memory efficiently with cache cleanup', () => {
     // Clear any existing singleton instance
     SchemaTransformer.clearInstance()
-    
+
     // Create a transformer with small cache size for testing
     const transformer = SchemaTransformer.getInstance(undefined, {
       maxCacheSize: 2,
       autoCleanup: true,
-      excludeNodeModules: true
+      excludeNodeModules: true,
     })
 
     // Clear any existing cache
@@ -305,13 +305,13 @@ describe('Transform Function', () => {
     // Transform multiple classes to trigger cache cleanup
     const result1 = transformer.transform(TestClass1)
     const result2 = transformer.transform(TestClass2)
-    
+
     let stats = transformer.getMemoryStats()
     assert.strictEqual(stats.cacheSize, 2)
 
     // This should trigger cache cleanup due to maxCacheSize: 2
     const result3 = transformer.transform(TestClass3)
-    
+
     stats = transformer.getMemoryStats()
     assert.ok(stats.cacheSize <= 2, 'Cache should be cleaned up automatically')
 

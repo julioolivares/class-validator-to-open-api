@@ -6,15 +6,15 @@ export class BrokenEntity {
   name: string
 
   // This should cause issues - circular reference
-  parent: BrokenEntity
+  parent?: BrokenEntity
 
   // Array without proper type decoration
   @IsArray()
-  items: any[]
+  items?: any[]
 
   // Property without any decorators
-  undecoratedProperty: string
+  undecoratedProperty?: string
 
   // Complex type that doesn't exist
-  complexType: Map<string, Set<number>>
+  complexType?: Map<string, Set<number>>
 }
