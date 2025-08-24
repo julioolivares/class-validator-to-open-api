@@ -15,8 +15,6 @@ interface TransformerOptions {
   maxCacheSize?: number
   /** Whether to automatically clean up cache (default: true) */
   autoCleanup?: boolean
-  /** Whether to exclude node_modules from scanning (default: true) */
-  excludeNodeModules?: boolean
 }
 
 /**
@@ -71,12 +69,6 @@ class SchemaTransformer {
   private readonly autoCleanup: boolean
 
   /**
-   * Whether to exclude node_modules from scanning
-   * @private
-   */
-  private readonly excludeNodeModules: boolean
-
-  /**
    * Set of file paths that have been loaded to avoid redundant processing
    * @private
    */
@@ -97,7 +89,6 @@ class SchemaTransformer {
     // Initialize configuration with defaults
     this.maxCacheSize = options.maxCacheSize ?? 100
     this.autoCleanup = options.autoCleanup ?? true
-    this.excludeNodeModules = options.excludeNodeModules ?? true
 
     const { config, error } = ts.readConfigFile(
       tsConfigPath || 'tsconfig.json',
@@ -173,12 +164,11 @@ class SchemaTransformer {
       return sourceFile ? [sourceFile] : []
     }
 
-    // Only get source files that are not declaration files and optionally not in node_modules
+    // Only get source files that are not declaration files and not in node_modules
     return this.program.getSourceFiles().filter(sf => {
       if (sf.isDeclarationFile) return false
       if (sf.fileName.includes('.d.ts')) return false
-      if (this.excludeNodeModules && sf.fileName.includes('node_modules'))
-        return false
+      if (sf.fileName.includes('node_modules')) return false
 
       // Mark file as loaded for memory tracking
       this.loadedFiles.add(sf.fileName)
@@ -244,8 +234,7 @@ class SchemaTransformer {
    * // With memory optimization options
    * const transformer = SchemaTransformer.getInstance('./tsconfig.json', {
    *   maxCacheSize: 50,
-   *   autoCleanup: true,
-   *   excludeNodeModules: true
+   *   autoCleanup: true
    * });
    * ```
    *

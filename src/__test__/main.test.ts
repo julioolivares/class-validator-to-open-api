@@ -281,7 +281,6 @@ describe('Transform Function', () => {
     const transformer = SchemaTransformer.getInstance(undefined, {
       maxCacheSize: 2,
       autoCleanup: true,
-      excludeNodeModules: true,
     })
 
     // Clear any existing cache
